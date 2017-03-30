@@ -1,0 +1,76 @@
+<?php
+/**
+ * @file
+ * Github module for integrating github repo information into Drupal.
+ */
+
+/**
+* Implements hook_help().
+*
+* Displays help and module information.
+*
+* @param path
+*   Which path of the site we're using to display help
+* @param arg
+*   Array that holds the current path as returned from arg() function
+*/
+function current_posts_help($path, $arg)
+{
+    switch ($path) {
+     case "admin/help#github_projects":
+       return t("Integrate Github repo information into Drupal");
+       break;
+    }
+}
+
+/**
+ * Implements hook_menu().
+ *
+ * Display menu for monfiguration page.
+ */
+function github_projects_menu()
+{
+    $items = array();
+
+    $items['admin/config/content/github_projects'] = array(
+    'title' => 'Github projects',
+    'description' => 'Configuration for Github projects module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('github_projects_form'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+    );
+
+    return $items;
+}
+
+/**
+ * Implements hook_form().
+ *
+ * Configuration form for Github authentication settings.
+ */
+function github_projects_form() {
+  $form = array();
+
+  $form['github_projects_username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Username of your Github account'),
+    '#default_value' => variable_get('github_projects_username', ''),
+    '#size' => 12,
+    '#maxlength' => 200,
+    '#description' => t("The Github Account you want to authenticate yourself and where your projects are stored."),
+    '#required' => TRUE,
+  );
+
+  $form['github_projects_token'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Authentication token'),
+    '#default_value' => variable_get('github_projects_token', ''),
+    '#size' => 40,
+    '#maxlength' => 40,
+    '#description' => t("Authentication token of your Github Account."),
+    '#required' => TRUE,
+  );
+
+  return system_settings_form($form);
+}
