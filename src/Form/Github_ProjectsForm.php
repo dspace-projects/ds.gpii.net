@@ -28,11 +28,11 @@ class Github_ProjectsForm extends ConfigFormBase {
     // Default settings
     $config = $this->config('github_projects.settings');
     // Source text field
-    $form['oauth'] = array(
+    $form['token'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Personal access token for authorization:'),
-      '#default_value' => $config->get('github_projects.oauth'),
-      '#description' => $this->t('Generate an personal access token <a href="https://github.com/settings/tokens/new" target="_blank" title="OAuth token">here</a>.'),
+      '#default_value' => $config->get('github_projects.token'),
+      '#description' => $this->t('Generate a personal access token <a href="https://github.com/settings/tokens/new" target="_blank" title="Github Personal Access token">here</a>.'),
     );
 
     return $form;
@@ -44,10 +44,10 @@ class Github_ProjectsForm extends ConfigFormBase {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $client = \Drupal::httpClient();
     try {
-      $response = $client->get('https://api.github.com/user', ['headers' => ['Authorization' => "token {$form_state->getValue('oauth')}"]]);
+      $response = $client->get('https://api.github.com/user', ['headers' => ['Authorization' => "token {$form_state->getValue('token')}"]]);
       $body = $response->getBody();
     } catch(RequestException $e) {
-      $form_state->setErrorByName('oauth', $this->t('Error: @error', array('@error' => $e->getMessage())));
+      $form_state->setErrorByName('token', $this->t('Error: @error', array('@error' => $e->getMessage())));
     }
     $json = json_decode($body, true);
     switch ($response->getStatusCode()) {
@@ -55,10 +55,10 @@ class Github_ProjectsForm extends ConfigFormBase {
         $form_state->setValue('login', $json['login']);
         break;
       case 401:
-        $form_state->setErrorByName('oauth', $this->t('Error: @error', array('@error' => $json['message'])));
+        $form_state->setErrorByName('token', $this->t('Error: @error', array('@error' => $json['message'])));
         break;
       default:
-        $form_state->setErrorByName('oauth', $this->t('HTTP Status Code: @error', array('@error' => $response->getStatusCode())));
+        $form_state->setErrorByName('token', $this->t('HTTP Status Code: @error', array('@error' => $response->getStatusCode())));
     }
   }
 
@@ -66,9 +66,9 @@ class Github_ProjectsForm extends ConfigFormBase {
    * {@inheritdoc}.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-	drupal_set_message($this->t('Hi @login', array('@login' => $form_state->getValue('login'))));
+    drupal_set_message($this->t('Hi @login', array('@login' => $form_state->getValue('login'))));
     $config = $this->config('github_projects.settings');
-    $config->set('github_projects.oauth', $form_state->getValue('oauth'));
+    $config->set('github_projects.token', $form_state->getValue('token'));
     $config->save();
     return parent::submitForm($form, $form_state);
   }
