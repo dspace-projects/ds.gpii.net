@@ -23,26 +23,26 @@ function github_projects_form() {
 
 function github_projects_form_validate($form, &$form_state){
   if (empty($form_state['values']['token'])) {
-      form_error($element, t('Token can not be empty.'));
+      form_set_error('token', t('Token can not be empty.'));
   }
   $response = drupal_http_request('https://api.github.com/user', ['headers' => ['Authorization' => "token {$form_state['values']['token']}"]]);
   if(!empty($response->error)) {
-    form_set_error($element, t('Error: @error', array('@error' => $response->error)));
+    form_set_error('token', t('Error: @error', array('@error' => $response->error)));
   }
   $data = $response->data;
-  $json = json_decode($data);
-  switch($response->status_message) {
+  $json = json_decode($data, true);
+  switch($response->code) {
       case 200:
         $form_state['values']['login'] = $json['login'];
         break;
       case 401:
-        form_set_error($element, t('Error: @error', array('@error' => $json['message'])));
+        form_set_error('token', t('Error: @error', array('@error' => $json['message'])));
         break;
       default:
-        form_set_error($element, t('HTTP Status Code: @error', array('@error' => $response->status_message)));
+        form_set_error('token', t('HTTP Status Code: @error', array('@error' => $response->status_message)));
   }
 }
 
 function github_projects_form_submit($form, &$form_state) {
-	drupal_set_message(t('Hi @login', array('@login' => $form_state['values']['login']));
+	drupal_set_message(t('Hi @login', array('@login' => $form_state['values']['login'])));
 }
