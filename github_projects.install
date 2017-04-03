@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * @file
+ * Installation functions for Github Projects.
+ */
+
+use Drupal\user\RoleInterface;
+
+/**
+ * Implements hook_install().
+ */
+function github_projects_install() {
+  user_role_change_permissions(RoleInterface::ANONYMOUS_ID, array(
+      'showcase github projects' => TRUE,
+  ));
+}

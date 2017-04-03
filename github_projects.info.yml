@@ -1,0 +1,6 @@
+name: Github Projects
+type: module
+description: 'Integrate Github Repositories into Drupal as content.'
+core: 8.x
+
+configure: github_projects.form

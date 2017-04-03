@@ -1,0 +1,7 @@
+github_projects.form:
+  path: '/admin/config/development/github_projects'
+  defaults:
+    _form: 'Drupal\github_projects\Form\Github_ProjectsForm'
+    _title: 'Github Projects settings'
+  requirements:
+    _permission: 'administer site configuration'

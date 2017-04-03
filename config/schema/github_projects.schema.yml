@@ -1,0 +1,10 @@
+github_projects.settings:
+  type: config_object
+  label: 'Github Projects settings'
+  mapping:
+    github_projects:
+      type: mapping
+      mapping:
+        oauth:
+          type: text
+          label: 'Github personal access token:'

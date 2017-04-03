@@ -1,0 +1,5 @@
+githubprojects.form:
+  title: 'Github Projects settings'
+  description: 'Configure settings for the Github Projects module.'
+  route_name: github_projects.form
+  parent: 'system.admin_config_development'
