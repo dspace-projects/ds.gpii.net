@@ -272,7 +272,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
         $terms[] = $term;
       }
 
-      $readme = "No Readme"
+      $readme = "No Readme";
       $readme = $this->parseReadmeResponse($readmeResponse);
 
       $license = "undefined";
