@@ -23,8 +23,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
   public $retrieve_multiple = TRUE;
 
   /**
-   * An array of conditions on the query. These are grouped by the table they
-   * are on.
+   * An array of conditions on the query, grouped by the table they are on.
    *
    * @var array
    */
@@ -52,8 +51,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
   public $user_id = NULL;
 
   /**
-   * Constructor to generically set up the user id condition if
-   * there is a current user.
+   * Constructor to generically set up the user id condition if there is a user.
    *
    * @param object $connection
    *   Connection used to make REST requests.
@@ -190,7 +188,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
           case 'repository_id':
             $repository_id = $condition['value'];
             $entities = array_filter($entities, function ($objects) use ($repository_id) {
-              return ($object->repository_id == $repository_id);
+              return ($objects->repository_id == $repository_id);
             });
             break;
 
@@ -219,8 +217,8 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
    *   An list of entity objects, keyed numerically.
    *   An empty array is returned if the response contains no entities.
    *
-   * @throws
-   *  Exception if a fault is received when the REST call was made.
+   * @throws Exception
+   *   Exception if a fault is received when the REST call was made.
    */
   public function parseEventResponse($response) {
 
@@ -274,6 +272,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
         $terms[] = $term;
       }
 
+      $readme = "No Readme"
       $readme = $this->parseReadmeResponse($readmeResponse);
 
       $license = "undefined";
@@ -314,8 +313,8 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
    * @return string
    *   Readme string.
    *
-   * @throws
-   *  Exception if a fault is received when the REST call was made.
+   * @throws Exception
+   *   Exception if a fault is received when the REST call was made.
    */
   public function parseReadmeResponse($response) {
 
@@ -343,8 +342,8 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
    * @return string
    *   Readme string.
    *
-   * @throws
-   *  Exception if a fault is received when the REST call was made.
+   * @throws Exception
+   *   Exception if a fault is received when the REST call was made.
    */
   public function parseLicenseResponse($response) {
 

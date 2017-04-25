@@ -252,10 +252,12 @@ function github_projects_get_remote_properties() {
 }
 
 /**
- * Menu autoloader wildcard for path 'repository/REMOTE_ID'.
+ * Menu autoloader wildcard for path 'github.com/OWNER/NAME'.
  *
- * @param string $remote_id
- *   The remote ID of the record to load.
+ * @param string $owner
+ *   The owner of the repository to load.
+ * @param string $name
+ *   The name of the repository to load.
  *
  * @see hook_menu()
  *
@@ -269,7 +271,7 @@ function github_projects_remote_repository_load($owner, $name) {
 }
 
 /**
- * Page callback for path 'repository/%remote_id'.
+ * Page callback for path 'github.com/OWNER/NAME'.
  *
  * @param object $repository
  *   The auto-loaded object.

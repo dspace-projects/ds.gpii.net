@@ -145,11 +145,6 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
    * Make a REST request.
    *
    * Originally from clients_connection_drupal_services_rest_7->makeRequest().
-   * Examples:
-   * Retrieve an event:
-   *  makeRequest('event?eventId=ID', 'GET');
-   * Update a node:
-   *  makeRequest('node/NID', 'POST', $data);
    *
    * @param string $resource_path
    *   The path of the resource. Eg, 'node', 'node/1', etc.
