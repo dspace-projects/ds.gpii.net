@@ -79,6 +79,7 @@ function github_projects_entity_info() {
       'label' => 'repository_name',
       'bundle' => array(),
     ),
+    'access callback' => 'github_projects_entity_callback',
     'view modes' => array(
       'full' => array(
         'label' => t('Full content'),
@@ -348,4 +349,11 @@ function github_projects_clients_default_resources() {
   ), 'clients_resource');
 
   return $resources;
+}
+
+/**
+ * Return user access to allow entity reference to display entiites.
+ */
+function github_projects_entity_callback($op, $entity = NULL, $account = NULL, $entity_type = '') {
+  return user_access($op, $account);
 }
