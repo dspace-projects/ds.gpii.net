@@ -9,6 +9,7 @@
  * Implements hook_schema().
  */
 function github_schema() {
+  module_load_include('install', 'remote_entity');
   $schema = array();
 
   $schema['github_remote_repositories'] = remote_entity_schema_table('our remote repository entity type');
