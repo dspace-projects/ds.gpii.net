@@ -39,7 +39,7 @@ function github_contenttype_preprocess_node(&$variables) {
  */
 function github_contenttype_theme($existing, $type, $theme, $path) {
   $theme = array();
-  $theme['node__github'] = array(
+  $theme['node__github_content'] = array(
     'render element' => 'content',
     'base hook' => 'node',
     'template' => 'node--github',
@@ -51,12 +51,12 @@ function github_contenttype_theme($existing, $type, $theme, $path) {
 /**
  * Implement hook_form()
  */
-function github_form($node, $form_state) {
+function github_content_form($node, $form_state) {
   return node_content_form($node, $form_state);
 }
 
-function github_contenttype_form_github_node_form_alter(&$form, &$form_state, $form_id) {
-  if($form_id == "github_node_form") {
+function github_contenttype_form_github_content_node_form_alter(&$form, &$form_state, $form_id) {
+  if($form_id == "github_content_node_form") {
     drupal_set_message("Altering the Form");
     //$form[]
   }

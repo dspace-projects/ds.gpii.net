@@ -12,7 +12,7 @@ function github_contenttype_install() {
 
   $content_type = [
 
-    'type' => 'github',
+    'type' => 'github_content',
     'name' => $t('Github Project'),
     'description' => $t('Create a new github projects'),
     'title_label' => $t('Github Project title'),
@@ -47,7 +47,7 @@ function github_contenttype_install() {
   foreach (_github_contenttype_installed_instances() as $instance) { // Loop through our instances
 
     $instance['entity_type'] = 'node';
-    $instance['bundle'] = 'github'; // Attach the instance to our content type
+    $instance['bundle'] = 'github_content'; // Attach the instance to our content type
 
     field_create_instance($instance);
 
@@ -141,7 +141,7 @@ function github_contenttype_uninstall() {
   $query .= 'FROM {node} n ';
   $query .= 'WHERE n.type = :type ';
 
-  $result = db_query($query, [':type' => 'github']);
+  $result = db_query($query, [':type' => 'github_content']);
 
   $nids = [];
 
@@ -155,7 +155,7 @@ function github_contenttype_uninstall() {
 
   // Delete fields and instances
 
-  foreach (field_info_instances('node', 'github') as $field_name => $instance) {
+  foreach (field_info_instances('node', 'github_content') as $field_name => $instance) {
 
     field_delete_instance($instance);
 
@@ -168,7 +168,7 @@ function github_contenttype_uninstall() {
 
   // Delete content type
 
-  node_type_delete('github');
+  node_type_delete('github_content');
 
   // Purge field batch
 

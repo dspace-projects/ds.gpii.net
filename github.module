@@ -38,7 +38,7 @@ function github_menu() {
     'page arguments' => array('github_form'),
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'src/Form/GithubForm.inc',
+    'file' => 'src/Form/GithubConfigForm.inc',
   );
 
   $items['github.com/%github_remote_repository/%'] = array(
@@ -90,7 +90,7 @@ function github_entity_info() {
     'field cache' => FALSE,
 
     // Entity API properties.
-    'entity class' => 'GithubProjectsRepository',
+    'entity class' => 'GithubRepository',
     'module' => 'github',
     'metadata controller class' => 'RemoteEntityAPIDefaultMetadataController',
     'views controller class' => 'EntityDefaultViewsController',
