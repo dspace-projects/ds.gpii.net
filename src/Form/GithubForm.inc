@@ -10,13 +10,13 @@
  *
  * Configuration form for Github authentication settings.
  */
-function github_projects_form() {
+function github_form() {
   $form = array();
 
   $form['token'] = array(
     '#type' => 'textfield',
     '#title' => t('Personal access token for authorization:'),
-    '#default_value' => variable_get('github_projects.token', ''),
+    '#default_value' => variable_get('github.token', ''),
     '#size' => 40,
     '#maxlength' => 40,
     '#description' => t("Generate a personal access token <a href='https://github.com/settings/tokens/new' target='_blank' title='Github Personal Access Token'>here</a>."),
@@ -28,7 +28,7 @@ function github_projects_form() {
     '#value' => 'Submit',
   );
 
-  $form['#submit'][] = "github_projects_form_submit";
+  $form['#submit'][] = "github_form_submit";
 
   return $form;
 }
@@ -38,7 +38,7 @@ function github_projects_form() {
  *
  * Validate the entered access token with Github API.
  */
-function github_projects_form_validate($form, &$form_state) {
+function github_form_validate($form, &$form_state) {
   if (empty($form_state['values']['token'])) {
     form_set_error('token', t('Token can not be empty.'));
   }
@@ -67,8 +67,19 @@ function github_projects_form_validate($form, &$form_state) {
  *
  * Output greeting with name if authentication is successful.
  */
-function github_projects_form_submit($form, &$form_state) {
+function github_form_submit($form, &$form_state) {
+  $connection = new clients_connection_our_rest(array(
+    'endpoint' => 'https://api.github.com',
+    'configuration' => array(
+      'username' => '',
+      'password' => '',
+    ),
+    'label' => 'Github API v3',
+    'type' => 'our_rest',
+  ), 'clients_connection');
+  $result = $connection->remote_entity_load_all("github_remote_repository");
+  dpm($result);
   drupal_set_message(t('Hi @login', array('@login' => $form_state['values']['login'])));
-  variable_set('github_projects.token', $form_state['values']['token']);
-  variable_set('github_projects.login', $form_state['values']['login']);
+  variable_set('github.token', $form_state['values']['token']);
+  variable_set('github.login', $form_state['values']['login']);
 }

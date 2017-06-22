@@ -37,6 +37,24 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
   }
 
   /**
+   * Load all remote entities.
+   *
+   * @param string $entity_type
+   *   The entity type to load.
+   *
+   * @return object
+   *   An entity object.
+   */
+  public function remote_entity_load_all($entity_type) {
+    $query = $this->getRemoteEntityQuery('select');
+    $query->base($entity_type);
+    $result = $query->execute();
+
+    // There's only one. Same pattern as entity_load_single().
+    return reset($result);
+  }
+
+  /**
    * Save a remote entity.
    *
    * @param string $entity_type
@@ -83,13 +101,13 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
   public function getRemoteEntityQuery($query_type = 'select') {
     switch ($query_type) {
       case 'select':
-        return new GithubProjectsRemoteSelectQuery($this);
+        return new GithubRemoteSelectQuery($this);
 
       case 'insert':
-        return new GithubProjectsRemoteInsertQuery($this);
+        return new GithubRemoteInsertQuery($this);
 
       case 'update':
-        return new GithubProjectsRemoteUpdateQuery($this);
+        return new GithubRemoteUpdateQuery($this);
     }
   }
 
@@ -204,7 +222,7 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
    * Add Authorization into Header.
    */
   private function getHeaders() {
-    $token = "token " . variable_get('github_projects.token', '');
+    $token = "token " . variable_get('github.token', '');
     return array('Authorization' => $token);
   }
 

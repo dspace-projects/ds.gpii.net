@@ -10,13 +10,13 @@
  *
  * Displays help and module information.
  */
-function github_projects_help($path, $arg) {
+function github_help($path, $arg) {
   switch ($path) {
-    case "admin/help#github_projects":
+    case "admin/help#github":
       return t("<h2>Showcase Github projects in Drupal.</h2>
       <h3>Instructions</h3>
       <p>Unpack in the <em>modules</em> folder (currently in the root of your Drupal 8 installation) and enable in <strong>/admin/modules</strong>.</p>
-      <p>Then, visit <strong>/admin/config/development/github_projects</strong> and configure your access token.</p>
+      <p>Then, visit <strong>/admin/config/development/github</strong> and configure your access token.</p>
       <h3>Attention</h3>
       <p>Most bugs have been ironed out, holes covered, features added. But this module is a work in progress. Please report bugs and suggestions.</p>
       ");
@@ -28,22 +28,22 @@ function github_projects_help($path, $arg) {
  *
  * Display menu for monfiguration page.
  */
-function github_projects_menu() {
+function github_menu() {
   $items = array();
 
-  $items['admin/config/development/github_projects'] = array(
+  $items['admin/config/development/github'] = array(
     'title' => 'Github projects',
     'description' => 'Configuration for Github projects module',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('github_projects_form'),
+    'page arguments' => array('github_form'),
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
-    'file' => 'src/Form/GithubProjectsForm.inc',
+    'file' => 'src/Form/GithubForm.inc',
   );
 
-  $items['github.com/%github_projects_remote_repository/%'] = array(
+  $items['github.com/%github_remote_repository/%'] = array(
     'title' => 'Remote Repository',
-    'page callback' => 'github_projects_remote_repository_view',
+    'page callback' => 'github_remote_repository_view',
     'page arguments' => array(1),
     'load arguments' => array(2),
     'access arguments' => array('access content'),
@@ -62,15 +62,15 @@ function github_projects_menu() {
  * @todo Add 'bundles' for different types of remote content.
  * @todo Remove 'static cache' and 'field cache' settings after development.
  */
-function github_projects_entity_info() {
+function github_entity_info() {
   $entities = array();
 
-  $entities['github_projects_remote_repository'] = array(
+  $entities['github_remote_repository'] = array(
 
     // Core properties.
     'label' => t('Repository'),
     'controller class' => 'RemoteEntityAPIDefaultController',
-    'base table' => 'github_projects_remote_repositories',
+    'base table' => 'github_remote_repositories',
     'uri callback' => 'entity_class_uri',
     'label callback' => 'remote_entity_entity_label',
     'fieldable' => FALSE,
@@ -79,7 +79,7 @@ function github_projects_entity_info() {
       'label' => 'repository_name',
       'bundle' => array(),
     ),
-    'access callback' => 'github_projects_entity_callback',
+    'access callback' => 'github_entity_callback',
     'view modes' => array(
       'full' => array(
         'label' => t('Full content'),
@@ -91,12 +91,12 @@ function github_projects_entity_info() {
 
     // Entity API properties.
     'entity class' => 'GithubProjectsRepository',
-    'module' => 'github_projects',
+    'module' => 'github',
     'metadata controller class' => 'RemoteEntityAPIDefaultMetadataController',
     'views controller class' => 'EntityDefaultViewsController',
 
     // Remote Entity API properties.
-    'remote base table' => 'github_projects_remote_repositories',
+    'remote base table' => 'github_remote_repositories',
     'remote entity keys' => array(
       'remote id' => 'repository_fullname',
       'label' => 'repository_name',
@@ -112,7 +112,7 @@ function github_projects_entity_info() {
   );
 
   // Get the property map data.
-  $remote_properties = github_projects_get_remote_properties();
+  $remote_properties = github_get_remote_properties();
 
   // Assign each map to its corresponding entity.
   foreach ($entities as $key => $einfo) {
@@ -134,14 +134,14 @@ function github_projects_entity_info() {
  *   a variation on it.
  * @todo: Remove whenever this gets added to the remote_entity module.
  */
-function github_projects_entity_property_info_alter(&$info) {
+function github_entity_property_info_alter(&$info) {
 
   // Set the entity types and get their properties.
   $entity_types = array(
-    'github_projects_remote_repository',
+    'github_remote_repository',
   );
 
-  $remote_properties = github_projects_get_remote_properties();
+  $remote_properties = github_get_remote_properties();
 
   // Assign the property data to each entity.
   foreach ($entity_types as $entity_type) {
@@ -166,13 +166,13 @@ function github_projects_entity_property_info_alter(&$info) {
  * @return array
  *   An array of property information keyed by entity type.
  */
-function github_projects_get_remote_properties() {
+function github_get_remote_properties() {
 
   // Initialize a list of entity properties.
   $properties = array();
 
   // Define properties for the entity type.
-  $properties['github_projects_remote_repository'] = array(
+  $properties['github_remote_repository'] = array(
 
     // Repository information.
     'repository_id' => array(
@@ -265,9 +265,9 @@ function github_projects_get_remote_properties() {
  * @return object
  *   The loaded object, or FALSE on failure.
  */
-function github_projects_remote_repository_load($owner, $name) {
+function github_remote_repository_load($owner, $name) {
   $remote_id = $owner . "/" . $name;
-  $return = remote_entity_load_by_remote_id('github_projects_remote_repository', $remote_id);
+  $return = remote_entity_load_by_remote_id('github_remote_repository', $remote_id);
   return $return;
 }
 
@@ -280,10 +280,10 @@ function github_projects_remote_repository_load($owner, $name) {
  * @return object
  *   The themed output for the repository page.
  */
-function github_projects_remote_repository_view($repository) {
+function github_remote_repository_view($repository) {
   $fullname = $repository->entity_data->repository_fullname;
   drupal_set_title($fullname);
-  $repository_output = theme('github_projects_remote_repository', array(
+  $repository_output = theme('github_remote_repository', array(
     'repository' => $repository->entity_data,
   ));
   return $repository_output;
@@ -292,11 +292,11 @@ function github_projects_remote_repository_view($repository) {
 /**
  * Implements hook_theme().
  */
-function github_projects_theme() {
+function github_theme() {
   return array(
-    'github_projects_remote_repository' => array(
+    'github_remote_repository' => array(
       'variables' => array('repository' => NULL),
-      'template' => 'src/Theme/github_projects',
+      'template' => 'src/Theme/github',
     ),
   );
 }
@@ -308,7 +308,7 @@ function github_projects_theme() {
 /**
  * Implements hook_clients_connection_type_info().
  */
-function github_projects_clients_connection_type_info() {
+function github_clients_connection_type_info() {
   return array(
     'our_rest' => array(
       'label'  => t('REST Data Services'),
@@ -323,7 +323,7 @@ function github_projects_clients_connection_type_info() {
 /**
  * Implements hook_clients_default_connections().
  */
-function github_projects_clients_default_connections() {
+function github_clients_default_connections() {
   $connections['my_rest_connection'] = new clients_connection_our_rest(array(
     'endpoint' => 'https://api.github.com',
     'configuration' => array(
@@ -340,9 +340,9 @@ function github_projects_clients_default_connections() {
 /**
  * Implements hook_clients_default_resources().
  */
-function github_projects_clients_default_resources() {
-  $resources['github_projects_remote_repository'] = new clients_resource_remote_entity(array(
-    'component' => 'github_projects_remote_repository',
+function github_clients_default_resources() {
+  $resources['github_remote_repository'] = new clients_resource_remote_entity(array(
+    'component' => 'github_remote_repository',
     'connection' => 'my_rest_connection',
     'label' => 'Resource for remote Github repository',
     'type' => 'remote_entity',
@@ -354,6 +354,6 @@ function github_projects_clients_default_resources() {
 /**
  * Return user access to allow entity reference to display entiites.
  */
-function github_projects_entity_callback($op, $entity = NULL, $account = NULL, $entity_type = '') {
+function github_entity_callback($op, $entity = NULL, $account = NULL, $entity_type = '') {
   return user_access($op, $account);
 }

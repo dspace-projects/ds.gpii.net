@@ -10,7 +10,7 @@
  *
  * @todo Make vars protected once no longer developing.
  */
-class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
+class GithubRemoteSelectQuery extends RemoteEntityQuery {
 
   /**
    * Determines whether the query is RetrieveMultiple or Retrieve.
@@ -166,7 +166,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
       return array();
     }
 
-    $path = "users/" . variable_get("github_projects.login", "") . "/starred";
+    $path = "users/" . variable_get("github.login", "") . "/starred";
 
     // Make the request.
     try {
@@ -177,7 +177,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
     }
 
     switch ($this->base_entity_type) {
-      case 'github_projects_remote_repository':
+      case 'github_remote_repository':
         $entities = $this->parseEventResponse($response);
         break;
     }
@@ -258,7 +258,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
         drupal_set_message($e->getMessage());
       }
 
-      $vocabulary = taxonomy_vocabulary_machine_name_load('github_projects_topics');
+      $vocabulary = taxonomy_vocabulary_machine_name_load('github_topics');
 
       $terms = array();
 
@@ -271,6 +271,8 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
         taxonomy_term_save($term);
         $terms[] = $term;
       }
+
+      dpm($terms);
 
       $readme = "No Readme";
       $readme = $this->parseReadmeResponse($readmeResponse);
@@ -373,7 +375,7 @@ class GithubProjectsRemoteSelectQuery extends RemoteEntityQuery {
   public function throwException($code, $message) {
 
     // Report error to the logs.
-    watchdog('github_projects', 'ERROR: GithubProjectsRemoteSelectQuery: "@code", "@message".', array(
+    watchdog('github', 'ERROR: GithubProjectsRemoteSelectQuery: "@code", "@message".', array(
       '@code' => $code,
       '@message' => $message,
     ));
