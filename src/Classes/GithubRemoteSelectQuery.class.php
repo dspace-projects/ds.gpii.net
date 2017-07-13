@@ -176,8 +176,11 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
       drupal_set_message($e->getMessage());
     }
 
+    //dpm($response);
+
     switch ($this->base_entity_type) {
       case 'github_remote_repository':
+        watchdog('github', 'Entity Type is github_remote_repository', array(), WATCHDOG_DEBUG);
         $entities = $this->parseEventResponse($response);
         break;
     }
@@ -225,11 +228,13 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
     // Fetch the list of events.
     if ($response->code == 404) {
       // No data was returned so let's provide an empty list.
+      watchdog('github', 'Response Code 404', array(), WATCHDOG_DEBUG);
       $repositories = array();
     }
     else /* We have response data */ {
       // Convert the JSON (assuming that's what we're getting) into a PHP array.
       // Do any unmarshalling to convert the response data into a PHP array.
+      watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG);
       $repositories = json_decode($response->data, TRUE);
     }
 
@@ -237,7 +242,8 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
     $entities = array();
 
     // Iterate through each event.
-    foreach ($repositories as $repository) {
+    foreach ($repositories as $key=>$repository) {
+      watchdog('github', 'Repository no. %key : %name', array('%key' => $key, '%name' => $repository['full_name']), WATCHDOG_DEBUG);
       $readmePath = "repos/" . $repository['full_name'] . "/readme";
 
       // Make the request.
@@ -272,7 +278,7 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
         $terms[] = $term;
       }
 
-      dpm($terms);
+      //dpm($terms);
 
       $readme = "No Readme";
       $readme = $this->parseReadmeResponse($readmeResponse);
@@ -322,10 +328,12 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
 
     // Fetch the list of events.
     if ($response->code == 404) {
+      watchdog('github', 'Readme response data not received', array(), WATCHDOG_DEBUG);
       // No data was returned so let's provide an empty list.
       $readme = NULL;
     }
     else /* We have response data */ {
+      watchdog('github', 'Readme response data received', array(), WATCHDOG_DEBUG);
       // Convert the JSON (assuming that's what we're getting) into a PHP array.
       // Do any unmarshalling to convert the response data into a PHP array.
       $readme = $response->data;
@@ -351,10 +359,12 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
 
     // Fetch the list of events.
     if ($response->code == 404) {
+      watchdog('github', 'License response data not received', array(), WATCHDOG_DEBUG);
       // No data was returned so let's provide an empty list.
-      $readme = NULL;
+      $license = "undefined";
     }
     else /* We have response data */ {
+      watchdog('github', 'License response data received', array(), WATCHDOG_DEBUG);
       // Convert the JSON (assuming that's what we're getting) into a PHP array.
       // Do any unmarshalling to convert the response data into a PHP array.
       $license = json_decode($response->data, TRUE)['license']['name'];

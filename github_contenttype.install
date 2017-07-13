@@ -16,14 +16,14 @@ function github_contenttype_install() {
     'name' => $t('Github Project'),
     'description' => $t('Create a new github projects'),
     'title_label' => $t('Github Project title'),
-    'base' => 'node_content',
+    'base' => 'node_content', //github_contenttype
     'custom' => TRUE,
 
   ];
 
   $node_type = node_type_set_defaults($content_type);
   node_type_save($node_type);
-  node_add_body_field($node_type);
+  //node_add_body_field($node_type);
 
 
   // Step 2 - Create new fields
@@ -31,12 +31,12 @@ function github_contenttype_install() {
   //$properties = entity_get_info("github_remote_repository");
   //dpm($properties);
   $properties = entity_get_property_info("github_remote_repository");
-  dpm($properties['properties']['entity_data']['property info'], "Property");
+  //dpm($properties['properties']['entity_data']['property info'], "Property");
 
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'github_remote_repository');
   $result = $query->execute();
-  dpm($result, "EFQ");
+  //dpm($result, "EFQ");
 
   foreach (_github_contenttype_installed_fields() as $field) { // Loop through fields and create them one by one
 

@@ -57,17 +57,17 @@ function github_content_form($node, $form_state) {
 
 function github_contenttype_form_github_content_node_form_alter(&$form, &$form_state, $form_id) {
   if($form_id == "github_content_node_form") {
-    drupal_set_message("Altering the Form");
+    //drupal_set_message("Altering the Form");
     //$form[]
   }
 }
 /* ATTACH AJAX CALLBACK */
 function github_contenttype_field_widget_form_alter(&$element, &$form_state, $context) {
   $widget_type = $context['instance']['widget']['type'];
-  drupal_set_message("Altering the Widget + $widget_type");
+  //drupal_set_message("Altering the Widget + $widget_type");
   // Get path to where in the element to put the AJAX callback.
   $parents = _github_contenttype_supported_widgets($widget_type);
-  dpm($widget_type);
+  //dpm($widget_type);
   if (is_array($parents)) {
 
     // Other modules can disable ajax for fields at their own peril.
@@ -79,9 +79,11 @@ function github_contenttype_field_widget_form_alter(&$element, &$form_state, $co
 
     $ajax_parent = &drupal_array_get_nested_value($element, $parents);
     // Add ajax callback to element.
+    /*
     $ajax_parent['#ajax'] = array(
       'callback' => 'github_contenttype_form_autofill',
     );
+    */
   }
   return;
 }
@@ -102,12 +104,12 @@ function github_contenttype_field_attach_form($entity_type, $entity, &$form, &$f
   $autofill_bundle_settings = $autofill_settings[$entity_type][$bundle];
 
 
-  drupal_set_message("Check for callback");
+  //drupal_set_message("Check for callback");
   // If an AJAX-call triggered this request,
   // use the triggering field's settings to autofill.
   $callback = isset($form_state['triggering_element']['#ajax']['callback']) ? $form_state['triggering_element']['#ajax']['callback'] : FALSE;
   if ($callback == 'github_contenttype_form_autofill') {
-    drupal_set_message("Callback exist");
+    //drupal_set_message("Callback exist");
   }
 }
 
@@ -126,7 +128,7 @@ function github_contenttype_form_autofill($form, $form_state) {
   $entity_type = $form_state['triggering_element']['#entity_type'];
   $bundle = isset($form_state['triggering_element']['#bundle']) ? $form_state['triggering_element']['#bundle'] : $entity_type;
 
-  drupal_set_message($bundle + "Bundle");
+  //drupal_set_message($bundle + "Bundle");
 
 }
 

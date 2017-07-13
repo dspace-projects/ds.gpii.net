@@ -357,3 +357,69 @@ function github_clients_default_resources() {
 function github_entity_callback($op, $entity = NULL, $account = NULL, $entity_type = '') {
   return user_access($op, $account);
 }
+
+/**
+ * Implements hook_cron().
+ */
+function github_cron() {
+  $items = array("Hello", "World");
+  // Put everything in a queue for processing.
+  $queue = DrupalQueue::get('github');
+  foreach($items as $item) {
+    $queue->createItem($item);
+  }
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function github_cron_queue_info() {
+  $queues['github'] = array(
+    'worker callback' => 'github_run',
+    // This is the callback function for each queue item.
+    'time' => 180,
+    // This is the max run time per cron run in seconds.
+  );
+  return $queues;
+}
+
+/**
+ * Worker Callback for the runner cron queue.
+ */
+function github_run($item) {
+  watchdog('github', 'Running github cron', array(), WATCHDOG_DEBUG);
+  $connection = new clients_connection_our_rest(array(
+    'endpoint' => 'https://api.github.com',
+    'configuration' => array(
+      'username' => '',
+      'password' => '',
+    ),
+    'label' => 'Github API v3',
+    'type' => 'our_rest',
+  ), 'clients_connection');
+
+  $path = "users/" . variable_get("github.login", "") . "/starred";
+
+  // Make the request.
+  try {
+    $response = $connection->makeRequest($path, 'GET', array('Accept' => 'application/vnd.github.mercy-preview+json'));
+  }
+  catch (Exception $e) {
+    drupal_set_message($e->getMessage());
+  }
+
+  // Fetch the list of events.
+  if ($response->code == 404) {
+    $repositories = array();
+  }
+  else {
+    $repositories = json_decode($response->data, TRUE);
+  }
+
+  // Iterate through each event.
+  foreach ($repositories as $key=>$repository) {
+    remote_entity_load_by_remote_id('github_remote_repository', $repository['full_name']);
+    watchdog('github', 'Loading repo %repository', array('%repository' => $repository['full_name']), WATCHDOG_DEBUG);
+  }
+
+}

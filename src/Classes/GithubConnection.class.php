@@ -46,10 +46,12 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
    *   An entity object.
    */
   public function remote_entity_load_all($entity_type) {
+    watchdog('github', 'Load all remote entities', array(), WATCHDOG_DEBUG);
     $query = $this->getRemoteEntityQuery('select');
     $query->base($entity_type);
     $result = $query->execute();
 
+    watchdog('github', 'Results', array(), WATCHDOG_DEBUG);
     // There's only one. Same pattern as entity_load_single().
     return reset($result);
   }
