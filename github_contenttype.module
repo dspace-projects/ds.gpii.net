@@ -24,14 +24,14 @@ function github_contenttype_help($path, $arg) {
 
 function github_contenttype_preprocess_node(&$variables) {
   //dpm($variables, "Variables");
-  $variables['name'] = isset($variables['github_namess'][0]['value']) ? $variables['github_namess'][0]['value'] : $variables['github_referencess'][0]['entity']->entity_data->repository_name;
-  $variables['readme'] = isset($variables['github_readmess'][0]['value']) ? $variables['github_readmess'][0]['value'] : $variables['github_referencess'][0]['entity']->entity_data->repository_readme;
-  $variables['url'] = $variables['github_referencess'][0]['entity']->entity_data->repository_url;
-  $variables['license'] = $variables['github_referencess'][0]['entity']->entity_data->repository_license;
-  $variables['topics'] = $variables['github_referencess'][0]['entity']->entity_data->repository_topics;
-  $variables['stargazers'] = $variables['github_referencess'][0]['entity']->entity_data->repository_stargazers;
-  $variables['watchers'] = $variables['github_referencess'][0]['entity']->entity_data->repository_watchers;
-  $variables['forks'] = $variables['github_referencess'][0]['entity']->entity_data->repository_forks;
+  $variables['name'] = !empty($variables['github_name'][0]['value']) ? $variables['github_name'][0]['value'] : $variables['github_reference'][0]['entity']->entity_data->repository_name;
+  $variables['readme'] = !empty($variables['github_readme'][0]['value']) ? $variables['github_readme'][0]['value'] : $variables['github_reference'][0]['entity']->entity_data->repository_readme;
+  $variables['url'] = $variables['github_reference'][0]['entity']->entity_data->repository_url;
+  $variables['license'] = $variables['github_reference'][0]['entity']->entity_data->repository_license;
+  $variables['topics'] = $variables['github_reference'][0]['entity']->entity_data->repository_topics;
+  $variables['stargazers'] = $variables['github_reference'][0]['entity']->entity_data->repository_stargazers;
+  $variables['watchers'] = $variables['github_reference'][0]['entity']->entity_data->repository_watchers;
+  $variables['forks'] = $variables['github_reference'][0]['entity']->entity_data->repository_forks;
 }
 
 /**
@@ -55,82 +55,83 @@ function github_content_form($node, $form_state) {
   return node_content_form($node, $form_state);
 }
 
-function github_contenttype_form_github_content_node_form_alter(&$form, &$form_state, $form_id) {
-  if($form_id == "github_content_node_form") {
-    //drupal_set_message("Altering the Form");
-    //$form[]
-  }
-}
-/* ATTACH AJAX CALLBACK */
-function github_contenttype_field_widget_form_alter(&$element, &$form_state, $context) {
-  $widget_type = $context['instance']['widget']['type'];
-  //drupal_set_message("Altering the Widget + $widget_type");
-  // Get path to where in the element to put the AJAX callback.
-  $parents = _github_contenttype_supported_widgets($widget_type);
-  //dpm($widget_type);
-  if (is_array($parents)) {
 
-    // Other modules can disable ajax for fields at their own peril.
-    $is_allowed = module_invoke_all('github_contenttype_detach_ajax', $context['field']['field_name'], $element, $context);
-    // Skip field if (strict) FALSE is returned by any module.
-    if (in_array(FALSE, $is_allowed, TRUE)) {
-      return;
-    }
-
-    $ajax_parent = &drupal_array_get_nested_value($element, $parents);
-    // Add ajax callback to element.
-    /*
-    $ajax_parent['#ajax'] = array(
-      'callback' => 'github_contenttype_form_autofill',
-    );
-    */
-  }
-  return;
-}
-
-function github_contenttype_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
-  // Get info about current entity.
-  list(, , $bundle) = entity_extract_ids($entity_type, $entity);
-
-  // Get array of fields that have enabled autofill.
-  $autofill_settings = _github_contenttype_get_settings();
-
-  // No autofill references in this bundle.
-  if (empty($autofill_settings[$entity_type][$bundle])) {
-    return;
-  }
-
-  // Load settings from form_state.
-  $autofill_bundle_settings = $autofill_settings[$entity_type][$bundle];
-
-
-  //drupal_set_message("Check for callback");
-  // If an AJAX-call triggered this request,
-  // use the triggering field's settings to autofill.
-  $callback = isset($form_state['triggering_element']['#ajax']['callback']) ? $form_state['triggering_element']['#ajax']['callback'] : FALSE;
-  if ($callback == 'github_contenttype_form_autofill') {
-    //drupal_set_message("Callback exist");
-  }
-}
-
-
-/**
- * AJAX callback for entity selection.
- *
- * @return array
- *   Array of AJAX commands.
- */
-function github_contenttype_form_autofill($form, $form_state) {
-  // Need entity type to continue.
-  if (!isset($form_state['triggering_element']['#entity_type'])) {
-    return;
-  }
-  $entity_type = $form_state['triggering_element']['#entity_type'];
-  $bundle = isset($form_state['triggering_element']['#bundle']) ? $form_state['triggering_element']['#bundle'] : $entity_type;
-
-  //drupal_set_message($bundle + "Bundle");
-
-}
+//function github_contenttype_form_github_content_node_form_alter(&$form, &$form_state, $form_id) {
+//  if($form_id == "github_content_node_form") {
+//    //drupal_set_message("Altering the Form");
+//    //$form[]
+//  }
+//}
+///* ATTACH AJAX CALLBACK */
+//function github_contenttype_field_widget_form_alter(&$element, &$form_state, $context) {
+//  $widget_type = $context['instance']['widget']['type'];
+//  //drupal_set_message("Altering the Widget + $widget_type");
+//  // Get path to where in the element to put the AJAX callback.
+//  $parents = _github_contenttype_supported_widgets($widget_type);
+//  //dpm($widget_type);
+//  if (is_array($parents)) {
+//
+//    // Other modules can disable ajax for fields at their own peril.
+//    $is_allowed = module_invoke_all('github_contenttype_detach_ajax', $context['field']['field_name'], $element, $context);
+//    // Skip field if (strict) FALSE is returned by any module.
+//    if (in_array(FALSE, $is_allowed, TRUE)) {
+//      return;
+//    }
+//
+//    $ajax_parent = &drupal_array_get_nested_value($element, $parents);
+//    // Add ajax callback to element.
+//    /*
+//    $ajax_parent['#ajax'] = array(
+//      'callback' => 'github_contenttype_form_autofill',
+//    );
+//    */
+//  }
+//  return;
+//}
+//
+//function github_contenttype_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode) {
+//  // Get info about current entity.
+//  list(, , $bundle) = entity_extract_ids($entity_type, $entity);
+//
+//  // Get array of fields that have enabled autofill.
+//  $autofill_settings = _github_contenttype_get_settings();
+//
+//  // No autofill references in this bundle.
+//  if (empty($autofill_settings[$entity_type][$bundle])) {
+//    return;
+//  }
+//
+//  // Load settings from form_state.
+//  $autofill_bundle_settings = $autofill_settings[$entity_type][$bundle];
+//
+//
+//  //drupal_set_message("Check for callback");
+//  // If an AJAX-call triggered this request,
+//  // use the triggering field's settings to autofill.
+//  $callback = isset($form_state['triggering_element']['#ajax']['callback']) ? $form_state['triggering_element']['#ajax']['callback'] : FALSE;
+//  if ($callback == 'github_contenttype_form_autofill') {
+//    //drupal_set_message("Callback exist");
+//  }
+//}
+//
+//
+///**
+// * AJAX callback for entity selection.
+// *
+// * @return array
+// *   Array of AJAX commands.
+// */
+//function github_contenttype_form_autofill($form, $form_state) {
+//  // Need entity type to continue.
+//  if (!isset($form_state['triggering_element']['#entity_type'])) {
+//    return;
+//  }
+//  $entity_type = $form_state['triggering_element']['#entity_type'];
+//  $bundle = isset($form_state['triggering_element']['#bundle']) ? $form_state['triggering_element']['#bundle'] : $entity_type;
+//
+//  //drupal_set_message($bundle + "Bundle");
+//
+//}
 
 /**
  * Populate other form fields with respect to this module's field settings.
@@ -248,63 +249,63 @@ function github_contenttype_populate_form_by_field($referenced_target_id, $refer
   }
 }
 */
-function _github_contenttype_supported_widgets($widget_type = FALSE) {
-  $supported_widgets = array(
-    'entityreference_autocomplete' => array('target_id'),
-    'options_select' => array(),
-    'options_buttons' => array(),
-  );
-
-  // Allow other modules to add other widgets support.
-  $additional_widgets = module_invoke_all('github_contenttype_supported_widgets');
-  $supported_widgets += $additional_widgets;
-
-  if ($widget_type) {
-    return isset($supported_widgets[$widget_type]) ? $supported_widgets[$widget_type] : FALSE;
-  }
-  return $supported_widgets;
-}
-
-function _github_contenttype_get_settings($reset = FALSE) {
-  // Use cached if available
-  // (Static is superfluous for now).
-  $settings = &drupal_static(__FUNCTION__);
-  if (!isset($settings) && !$reset) {
-    $cache = cache_get(__FUNCTION__);
-    if (!empty($cache->data)) {
-      $settings = $cache->data;
-    }
-  }
-  // Rebuild settings.
-  if (!isset($settings) || $reset) {
-    $field_map = field_info_field_map();
-    $enabled_fields = array();
-    foreach ($field_map as $field_name => $field) {
-      if ($field['type'] !== 'entityreference') {
-        continue;
-      }
-      foreach ($field['bundles'] as $entity_type => $bundles) {
-        foreach ($bundles as $bundle) {
-          $field_info = field_info_instance($entity_type, $field_name, $bundle);
-          if (isset($field_info['settings']['behaviors']['autofill'])) {
-            $module_settings = $field_info['settings']['behaviors']['autofill'];
-            if ($module_settings['status']) {
-              // Clear unused fields from field array.
-              $module_settings['fields'] = array_filter($module_settings['fields']);
-              $enabled_fields[$entity_type][$bundle][$field_name] = $module_settings;
-              // Reduntant, module is enabled if key exists.
-              unset($module_settings['status']);
-              // Entityreference prepopulate is enabled.
-              if (!empty($field_info['settings']['behaviors']['prepopulate']['status'])) {
-                $enabled_fields[$entity_type][$bundle][$field_name]['prepopulate'] = TRUE;
-              }
-            }
-          }
-        }
-      }
-    }
-    cache_set(__FUNCTION__, $enabled_fields);
-    $settings = $enabled_fields;
-  }
-  return $settings;
-}
+//function _github_contenttype_supported_widgets($widget_type = FALSE) {
+//  $supported_widgets = array(
+//    'entityreference_autocomplete' => array('target_id'),
+//    'options_select' => array(),
+//    'options_buttons' => array(),
+//  );
+//
+//  // Allow other modules to add other widgets support.
+//  $additional_widgets = module_invoke_all('github_contenttype_supported_widgets');
+//  $supported_widgets += $additional_widgets;
+//
+//  if ($widget_type) {
+//    return isset($supported_widgets[$widget_type]) ? $supported_widgets[$widget_type] : FALSE;
+//  }
+//  return $supported_widgets;
+//}
+//
+//function _github_contenttype_get_settings($reset = FALSE) {
+//  // Use cached if available
+//  // (Static is superfluous for now).
+//  $settings = &drupal_static(__FUNCTION__);
+//  if (!isset($settings) && !$reset) {
+//    $cache = cache_get(__FUNCTION__);
+//    if (!empty($cache->data)) {
+//      $settings = $cache->data;
+//    }
+//  }
+//  // Rebuild settings.
+//  if (!isset($settings) || $reset) {
+//    $field_map = field_info_field_map();
+//    $enabled_fields = array();
+//    foreach ($field_map as $field_name => $field) {
+//      if ($field['type'] !== 'entityreference') {
+//        continue;
+//      }
+//      foreach ($field['bundles'] as $entity_type => $bundles) {
+//        foreach ($bundles as $bundle) {
+//          $field_info = field_info_instance($entity_type, $field_name, $bundle);
+//          if (isset($field_info['settings']['behaviors']['autofill'])) {
+//            $module_settings = $field_info['settings']['behaviors']['autofill'];
+//            if ($module_settings['status']) {
+//              // Clear unused fields from field array.
+//              $module_settings['fields'] = array_filter($module_settings['fields']);
+//              $enabled_fields[$entity_type][$bundle][$field_name] = $module_settings;
+//              // Reduntant, module is enabled if key exists.
+//              unset($module_settings['status']);
+//              // Entityreference prepopulate is enabled.
+//              if (!empty($field_info['settings']['behaviors']['prepopulate']['status'])) {
+//                $enabled_fields[$entity_type][$bundle][$field_name]['prepopulate'] = TRUE;
+//              }
+//            }
+//          }
+//        }
+//      }
+//    }
+//    cache_set(__FUNCTION__, $enabled_fields);
+//    $settings = $enabled_fields;
+//  }
+//  return $settings;
+//}
