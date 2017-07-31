@@ -24,6 +24,13 @@ function github_contenttype_help($path, $arg) {
 
 function github_contenttype_preprocess_node(&$variables) {
   //dpm($variables, "Variables");
+  $function = __FUNCTION__ . '_' . $variables['node']->type;
+  if (function_exists($function)) {
+    $function($variables);
+  }
+}
+
+function github_contenttype_preprocess_node_github_content(&$variables) {
   $variables['name'] = !empty($variables['github_name'][0]['value']) ? $variables['github_name'][0]['value'] : $variables['github_reference'][0]['entity']->entity_data->repository_name;
   $variables['readme'] = !empty($variables['github_readme'][0]['value']) ? $variables['github_readme'][0]['value'] : $variables['github_reference'][0]['entity']->entity_data->repository_readme;
   $variables['url'] = $variables['github_reference'][0]['entity']->entity_data->repository_url;
