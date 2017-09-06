@@ -1,28 +1,28 @@
-<?php
+	<?php
 
-/**
- * @file
- * Contains the GithubProjectsRemoteSelectQuery class.
- */
+	/**
+	 * @file
+	 * Contains the GithubProjectsRemoteSelectQuery class.
+	 */
 
-/**
- * Select query for our remote data.
- *
- * @todo Make vars protected once no longer developing.
- */
-class GithubRemoteSelectQuery extends RemoteEntityQuery {
+	/**
+	 * Select query for our remote data.
+	 *
+	 * @todo Make vars protected once no longer developing.
+	 */
+	class GithubRemoteSelectQuery extends RemoteEntityQuery {
 
-  /**
-   * Determines whether the query is RetrieveMultiple or Retrieve.
-   *
-   * The query is Multiple by default, until an ID condition causes it to be
-   * single.
-   *
-   * @var bool
-   */
-  public $retrieve_multiple = TRUE;
+	  /**
+	   * Determines whether the query is RetrieveMultiple or Retrieve.
+	   *
+	   * The query is Multiple by default, until an ID condition causes it to be
+	   * single.
+	   *
+	   * @var bool
+	   */
+	  public $retrieve_multiple = TRUE;
 
-  /**
+	  /**
    * An array of conditions on the query, grouped by the table they are on.
    *
    * @var array
@@ -100,7 +100,8 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
       $this->throwException(
         'GITHUBPROJECTSREMOTESELECTQUERY_INVALID_ENTITY_CONDITION',
         'The query object can only accept the \'entity_id\' condition.'
-      );
+);
+      //dpm('The query object can only accept the \'entity_id\'');
     }
   }
 
@@ -249,6 +250,9 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
       // Make the request.
       try {
         $readmeResponse = $this->connection->makeRequest($readmePath, 'GET', array('Accept' => 'application/vnd.github.v3.html'));
+
+	//$readmeResponse=[];
+	//$readmeResponse["code"]=404;
       }
       catch (Exception $e) {
         drupal_set_message($e->getMessage());
@@ -258,12 +262,14 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
 
       // Make the request.
       try {
+	//$licenseResponse=[];
+	//$licenseResponse["code"]=404;
         $licenseResponse = $this->connection->makeRequest($licensePath, 'GET', array('Accept' => 'application/vnd.github.drax-preview+json'));
       }
       catch (Exception $e) {
         drupal_set_message($e->getMessage());
       }
-
+/*
       $vocabulary = taxonomy_vocabulary_machine_name_load('github_topics');
 
       $terms = array();
@@ -277,7 +283,7 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
         taxonomy_term_save($term);
         $terms[] = $term;
       }
-
+*/
       //dpm($terms);
 
       $readme = "No Readme";
