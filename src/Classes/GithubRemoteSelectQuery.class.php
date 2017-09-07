@@ -326,7 +326,6 @@
         drupal_set_message($e->getMessage());
       }
 
-
       $entities[] = (object) array(
         // Set repository information.
         'repository_id' => isset($repository['id']) ? $repository['id'] : NULL,
