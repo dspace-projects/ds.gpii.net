@@ -362,12 +362,9 @@ function github_entity_callback($op, $entity = NULL, $account = NULL, $entity_ty
  * Implements hook_cron().
  */
 function github_cron() {
-  $items = array("Hello", "World");
   // Put everything in a queue for processing.
   $queue = DrupalQueue::get('github');
-  foreach($items as $item) {
-    $queue->createItem($item);
-  }
+  $queue->createItem(1);
 }
 
 /**
@@ -388,38 +385,21 @@ function github_cron_queue_info() {
  */
 function github_run($item) {
   watchdog('github', 'Running github cron', array(), WATCHDOG_DEBUG);
-  $connection = new clients_connection_our_rest(array(
-    'endpoint' => 'https://api.github.com',
-    'configuration' => array(
-      'username' => '',
-      'password' => '',
-    ),
-    'label' => 'Github API v3',
-    'type' => 'our_rest',
-  ), 'clients_connection');
+  $resource = clients_resource_get_for_component('remote_entity', 'github_remote_repository');
+  $query = $resource->getRemoteEntityQuery('select');
+  $query->base('github_remote_repository');
+  $result = $query->execute();
 
-  $path = "users/" . variable_get("github.login", "") . "/starred";
-
-  // Make the request.
-  try {
-    $response = $connection->makeRequest($path, 'GET', array('Accept' => 'application/vnd.github.mercy-preview+json'));
-  }
-  catch (Exception $e) {
-    drupal_set_message($e->getMessage());
+  foreach ($result as $r) {
+	   try
+	   {
+	   	remote_entity_load_by_remote_id('github_remote_repository', $r->repository_fullname); //TODO:don't reload but call correct caching function;
+	   }
+	   catch(Exception $e)
+		   {
+			  // print_r($e); //TODO:handle emojis
+	   }
   }
 
-  // Fetch the list of events.
-  if ($response->code == 404) {
-    $repositories = array();
-  }
-  else {
-    $repositories = json_decode($response->data, TRUE);
   }
 
-  // Iterate through each event.
-  foreach ($repositories as $key=>$repository) {
-    remote_entity_load_by_remote_id('github_remote_repository', $repository['full_name']);
-    watchdog('github', 'Loading repo %repository', array('%repository' => $repository['full_name']), WATCHDOG_DEBUG);
-  }
-
-}

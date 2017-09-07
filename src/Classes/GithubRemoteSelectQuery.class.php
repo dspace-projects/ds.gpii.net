@@ -1,28 +1,28 @@
-<?php
+	<?php
 
-/**
- * @file
- * Contains the GithubProjectsRemoteSelectQuery class.
- */
+	/**
+	 * @file
+	 * Contains the GithubProjectsRemoteSelectQuery class.
+	 */
 
-/**
- * Select query for our remote data.
- *
- * @todo Make vars protected once no longer developing.
- */
-class GithubRemoteSelectQuery extends RemoteEntityQuery {
+	/**
+	 * Select query for our remote data.
+	 *
+	 * @todo Make vars protected once no longer developing.
+	 */
+	class GithubRemoteSelectQuery extends RemoteEntityQuery {
 
-  /**
-   * Determines whether the query is RetrieveMultiple or Retrieve.
-   *
-   * The query is Multiple by default, until an ID condition causes it to be
-   * single.
-   *
-   * @var bool
-   */
-  public $retrieve_multiple = TRUE;
+	  /**
+	   * Determines whether the query is RetrieveMultiple or Retrieve.
+	   *
+	   * The query is Multiple by default, until an ID condition causes it to be
+	   * single.
+	   *
+	   * @var bool
+	   */
+	  public $retrieve_multiple = TRUE;
 
-  /**
+	  /**
    * An array of conditions on the query, grouped by the table they are on.
    *
    * @var array
@@ -100,7 +100,8 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
       $this->throwException(
         'GITHUBPROJECTSREMOTESELECTQUERY_INVALID_ENTITY_CONDITION',
         'The query object can only accept the \'entity_id\' condition.'
-      );
+);
+      //dpm('The query object can only accept the \'entity_id\'');
     }
   }
 
@@ -150,6 +151,30 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
     );
   }
 
+  function parseLink($l)
+  {
+	  $links = [];
+	  $links = explode(',', $l);
+	  $temp = count($links);
+	  foreach ($links as $link) {
+		  $segments = [];
+		  $segments = explode(';', $link);
+		  if (count($segments) < 2)
+			  continue;
+		  $linkPart = trim($segments[0]);
+
+		  $linklen = strlen($linkPart);
+
+		  $linkPart = substr($linkPart, 1, $linklen - 2);
+		  for ($i = 1; $i < count($segments); $i++) {
+			  $rel = trim($segments[1]);
+			  if(strcmp($rel, 'rel="next"')==0) {
+				  return substr($linkPart, 23);
+			  }
+		  }
+	  }
+	  return NULL;
+  }
   /**
    * Run the query and return a result.
    *
@@ -159,6 +184,7 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
    *   Remote entity objects as retrieved from the remote connection.
    */
   public function execute() {
+
 	  $entities = [];
 
 	  // If there are any validation errors, don't perform a search.
@@ -168,17 +194,25 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
 
 	  $path = "users/" . variable_get("github.login", "") . "/starred";
 
-	  // Make the request.
-	  try {
-		  $response = $this->connection->makeRequest($path, 'GET', array('Accept' => 'application/vnd.github.mercy-preview+json')); //TODO: Cache!!!
 
-		  //dpm($response);
+	  //$k = 0;
+	  while($path){
+		  // Make the request.
+		  try {
+			  $response = $this->connection->makeRequest($path, 'GET', array('Accept' => 'application/vnd.github.mercy-preview+json'));
+		  }
+		  catch (Exception $e) {
+			  drupal_set_message($e->getMessage());
+		  }
+
 
 		  switch ($this->base_entity_type) {
 		  case 'github_remote_repository':
 			  watchdog('github', 'Entity Type is github_remote_repository', array(), WATCHDOG_DEBUG);
 
-			  // Fetch the list of events.V
+
+			  // Fetch the list of events.
+
 			  if ($response->code == 404) {
 				  // No data was returned so let's provide an empty list.
 				  watchdog('github', 'Response Code 404', array(), WATCHDOG_DEBUG);
@@ -187,42 +221,68 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
 			  else /* We have response data */ {
 				  // Convert the JSON (assuming that's what we're getting) into a PHP array.
 				  // Do any unmarshalling to convert the response data into a PHP array.
-				  watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG);
-				  $repositories = array_values(json_decode($response->data, TRUE));
+				  watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG)
+				  $ttt =array_values(json_decode($response->data, TRUE));
 			  }
-
-			  if (isset($this->conditions[$this->remote_base])) {
-				  foreach ($this->conditions[$this->remote_base] as $condition) {
-					  switch ($condition['field']) {
-					  case 'repository_id':
-						  $repository_id = $condition['value'];
-						  $repositories = array_filter($repositories, function ($objects) use ($repository_id) {
-							  return ($objects['id'] == $repository_id);
-						  });
-						  break;
-
-					  case 'repository_fullname':
-						  $repository_fullname = $condition['value'];
-						  $repositories = array_filter($repositories, function ($objects) use ($repository_fullname) {
-							  return ($objects['full_name'] == $repository_fullname);
-						  });
-						  break;
-					  }
-				  }
+			  //$ttt['repository_fullname'] = 'aaa';
+      /*	$entities[] = (object) array(
+	// Set repository information.
+	'repository_id' => $k,
+	'repository_name' => 'bbbb',
+	'repository_fullname' => htmlentities($linkPart),
+);
+			$entities[] = (object) array(
+			'repository_id' => 1234,
+	'repository_name' => 'fdfda',
+	'repository_fullname' => 'abc',
+      );*/
+			  //$entities = $ttt;	
+			  for ($i= 0; $i<count($ttt); $i++) {
+				  $repositories[] = $ttt[$i];
 			  }
-
-
-			  $entities = $this->parseEventResponse($repositories);
-
 			  break;
-
 		  }
-	  }
-	  catch (Exception $e) {
-		  drupal_set_message($e->getMessage());
-	  }
-	  // Return the list of results.
-	  return $entities;
+
+
+		  $headers = $response->headers;
+		  if (isset($headers['link'])) {
+			  if(!$path) break;
+			  $path=$this->parseLink($headers['link']);
+	}
+	else
+		$path=NULL;
+
+    }
+    //dpm($response);
+
+
+//		print_r("\nbefore:".count($repositories));
+
+    if (isset($this->conditions[$this->remote_base])) {
+	    foreach ($this->conditions[$this->remote_base] as $condition) {
+		    switch ($condition['field']) {
+		    case 'repository_id':
+			    $repository_id = $condition['value'];
+			    $repositories = array_filter($repositories, function ($objects) use ($repository_id) {
+				    return ($objects["id"] == $repository_id);
+			    });
+			    break;
+
+          			case 'repository_fullname':
+            				$repository_fullname = $condition['value'];
+            				$repositories = array_filter($repositories, function ($objects) use ($repository_fullname) {
+              					return ($objects["full_name"] == $repository_fullname);
+            				});
+            			break;
+        		}
+      		}
+    	}
+//		print_r("after:\n".count($repositories));
+    	// Return the list of results.
+    $entities = $this->parseEventResponse($repositories);
+//`		print_r("entity\n".count($entities));
+    return $entities;
+
   }
 
   /**
@@ -243,53 +303,34 @@ class GithubRemoteSelectQuery extends RemoteEntityQuery {
   public function parseEventResponse($repositories) {
 
 
-	  // Initialize an empty list of entities for returning.
-	  $entities = array();
+    // Initialize an empty list of entities for returning.
+    $entities = array();
 
-	  // Iterate through each event.
-	  foreach ($repositories as $key=>$repository) {
-		  watchdog('github', 'Repository no. %key : %name', array('%key' => $key, '%name' => $repository['full_name']), WATCHDOG_DEBUG);
-		  $readmePath = "repos/" . $repository['full_name'] . "/readme";
+    // Iterate through each event.
+    foreach ($repositories as $key=>$repository) {
+      watchdog('github', 'Repository no. %key : %name', array('%key' => $key, '%name' => $repository['full_name']), WATCHDOG_DEBUG);
+      $readmePath = "repos/" . $repository['full_name'] . "/readme";
 
-		  // Make the request.
-		  try {
-			  $readmeResponse = $this->connection->makeRequest($readmePath, 'GET', array('Accept' => 'application/vnd.github.v3.html'));
-		  }
-		  catch (Exception $e) {
-			  drupal_set_message($e->getMessage());
-		  }
+      // Make the request.
+      try {
+        $readmeResponse = $this->connection->makeRequest($readmePath, 'GET', array('Accept' => 'application/vnd.github.v3.html'));
+	$readme = $this->parseReadmeResponse($readmeResponse);
+      }
+      catch (Exception $e) {
+        drupal_set_message($e->getMessage());
+      }
 
-		  $licensePath = "repos/" . $repository['full_name'] . "/license";
+      $licensePath = "repos/" . $repository['full_name'] . "/license";
 
-		  // Make the request.
-		  try {
-			  $licenseResponse = $this->connection->makeRequest($licensePath, 'GET', array('Accept' => 'application/vnd.github.drax-preview+json'));
-		  }
-		  catch (Exception $e) {
-			  drupal_set_message($e->getMessage());
-		  }
+      // Make the request.
+      try {
+        $licenseResponse = $this->connection->makeRequest($licensePath, 'GET', array('Accept' => 'application/vnd.github.drax-preview+json'));
+	$license = $this->parseLicenseResponse($licenseResponse);
+      }
+      catch (Exception $e) {
+        drupal_set_message($e->getMessage());
+      }
 
-		  $vocabulary = taxonomy_vocabulary_machine_name_load('github_topics');
-
-		  $terms = array();
-
-		  foreach ($repository['topics'] as $topic) {
-			  $term = (object) array(
-				  'name' => $topic,
-				  'description' => $topic,
-				  'vid' => $vocabulary->vid,
-			  );
-			  taxonomy_term_save($term);
-			  $terms[] = $term;
-		  }
-
-		  //dpm($terms);
-
-      $readme = "No Readme";
-      $readme = $this->parseReadmeResponse($readmeResponse);
-
-      $license = "undefined";
-      $license = $this->parseLicenseResponse($licenseResponse);
 
       $entities[] = (object) array(
         // Set repository information.
