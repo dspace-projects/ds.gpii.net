@@ -184,8 +184,8 @@
    *   Remote entity objects as retrieved from the remote connection.
    */
   public function execute() {
-	  //$entities = [];
-	  $repositories = array();
+
+	  $entities = [];
 
 	  // If there are any validation errors, don't perform a search.
 	  if (form_set_error()) {
@@ -193,6 +193,7 @@
 	  }
 
 	  $path = "users/" . variable_get("github.login", "") . "/starred";
+
 
 	  //$k = 0;
 	  while($path){
@@ -204,11 +205,14 @@
 			  drupal_set_message($e->getMessage());
 		  }
 
+
 		  switch ($this->base_entity_type) {
 		  case 'github_remote_repository':
 			  watchdog('github', 'Entity Type is github_remote_repository', array(), WATCHDOG_DEBUG);
 
+
 			  // Fetch the list of events.
+
 			  if ($response->code == 404) {
 				  // No data was returned so let's provide an empty list.
 				  watchdog('github', 'Response Code 404', array(), WATCHDOG_DEBUG);
@@ -217,7 +221,7 @@
 			  else /* We have response data */ {
 				  // Convert the JSON (assuming that's what we're getting) into a PHP array.
 				  // Do any unmarshalling to convert the response data into a PHP array.
-				  watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG);
+				  watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG)
 				  $ttt =array_values(json_decode($response->data, TRUE));
 			  }
 			  //$ttt['repository_fullname'] = 'aaa';
@@ -278,6 +282,7 @@
     $entities = $this->parseEventResponse($repositories);
 //`		print_r("entity\n".count($entities));
     return $entities;
+
   }
 
   /**
@@ -325,6 +330,7 @@
       catch (Exception $e) {
         drupal_set_message($e->getMessage());
       }
+
 
       $entities[] = (object) array(
         // Set repository information.
