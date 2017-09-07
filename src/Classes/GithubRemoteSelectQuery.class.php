@@ -151,6 +151,30 @@
     );
   }
 
+  function parseLink($l)
+  {
+	  $links = [];
+	  $links = explode(',', $l);
+	  $temp = count($links);
+	  foreach ($links as $link) {
+		  $segments = [];
+		  $segments = explode(';', $link);
+		  if (count($segments) < 2)
+			  continue;
+		  $linkPart = trim($segments[0]);
+
+		  $linklen = strlen($linkPart);
+
+		  $linkPart = substr($linkPart, 1, $linklen - 2);
+		  for ($i = 1; $i < count($segments); $i++) {
+			  $rel = trim($segments[1]);
+			  if(strcmp($rel, 'rel="next"')==0) {
+				  return substr($linkPart, 23);
+			  }
+		  }
+	  }
+	  return NULL;
+  }
   /**
    * Run the query and return a result.
    *
@@ -160,52 +184,99 @@
    *   Remote entity objects as retrieved from the remote connection.
    */
   public function execute() {
-    $entities = [];
+	  //$entities = [];
+	  $repositories = array();
 
-    // If there are any validation errors, don't perform a search.
-    if (form_set_error()) {
-      return array();
+	  // If there are any validation errors, don't perform a search.
+	  if (form_set_error()) {
+		  return array();
+	  }
+
+	  $path = "users/" . variable_get("github.login", "") . "/starred";
+
+	  //$k = 0;
+	  while($path){
+		  // Make the request.
+		  try {
+			  $response = $this->connection->makeRequest($path, 'GET', array('Accept' => 'application/vnd.github.mercy-preview+json'));
+		  }
+		  catch (Exception $e) {
+			  drupal_set_message($e->getMessage());
+		  }
+
+		  switch ($this->base_entity_type) {
+		  case 'github_remote_repository':
+			  watchdog('github', 'Entity Type is github_remote_repository', array(), WATCHDOG_DEBUG);
+
+			  // Fetch the list of events.
+			  if ($response->code == 404) {
+				  // No data was returned so let's provide an empty list.
+				  watchdog('github', 'Response Code 404', array(), WATCHDOG_DEBUG);
+				  $repositories = array();
+			  }
+			  else /* We have response data */ {
+				  // Convert the JSON (assuming that's what we're getting) into a PHP array.
+				  // Do any unmarshalling to convert the response data into a PHP array.
+				  watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG);
+				  $ttt =array_values(json_decode($response->data, TRUE));
+			  }
+			  //$ttt['repository_fullname'] = 'aaa';
+      /*	$entities[] = (object) array(
+	// Set repository information.
+	'repository_id' => $k,
+	'repository_name' => 'bbbb',
+	'repository_fullname' => htmlentities($linkPart),
+);
+			$entities[] = (object) array(
+			'repository_id' => 1234,
+	'repository_name' => 'fdfda',
+	'repository_fullname' => 'abc',
+      );*/
+			  //$entities = $ttt;	
+			  for ($i= 0; $i<count($ttt); $i++) {
+				  $repositories[] = $ttt[$i];
+			  }
+			  break;
+		  }
+
+
+		  $headers = $response->headers;
+		  if (isset($headers['link'])) {
+			  if(!$path) break;
+			  $path=$this->parseLink($headers['link']);
+	}
+	else
+		$path=NULL;
+
     }
-
-    $path = "users/" . variable_get("github.login", "") . "/starred";
-
-    // Make the request.
-    try {
-      $response = $this->connection->makeRequest($path, 'GET', array('Accept' => 'application/vnd.github.mercy-preview+json'));
-    }
-    catch (Exception $e) {
-      drupal_set_message($e->getMessage());
-    }
-
     //dpm($response);
 
-    switch ($this->base_entity_type) {
-      case 'github_remote_repository':
-        watchdog('github', 'Entity Type is github_remote_repository', array(), WATCHDOG_DEBUG);
-        $entities = $this->parseEventResponse($response);
-        break;
-    }
+
+//		print_r("\nbefore:".count($repositories));
 
     if (isset($this->conditions[$this->remote_base])) {
-      foreach ($this->conditions[$this->remote_base] as $condition) {
-        switch ($condition['field']) {
-          case 'repository_id':
-            $repository_id = $condition['value'];
-            $entities = array_filter($entities, function ($objects) use ($repository_id) {
-              return ($objects->repository_id == $repository_id);
-            });
-            break;
+	    foreach ($this->conditions[$this->remote_base] as $condition) {
+		    switch ($condition['field']) {
+		    case 'repository_id':
+			    $repository_id = $condition['value'];
+			    $repositories = array_filter($repositories, function ($objects) use ($repository_id) {
+				    return ($objects["id"] == $repository_id);
+			    });
+			    break;
 
-          case 'repository_fullname':
-            $repository_fullname = $condition['value'];
-            $entities = array_filter($entities, function ($objects) use ($repository_fullname) {
-              return ($objects->repository_fullname == $repository_fullname);
-            });
-            break;
-        }
-      }
-    }
-    // Return the list of results.
+          			case 'repository_fullname':
+            				$repository_fullname = $condition['value'];
+            				$repositories = array_filter($repositories, function ($objects) use ($repository_fullname) {
+              					return ($objects["full_name"] == $repository_fullname);
+            				});
+            			break;
+        		}
+      		}
+    	}
+//		print_r("after:\n".count($repositories));
+    	// Return the list of results.
+    $entities = $this->parseEventResponse($repositories);
+//`		print_r("entity\n".count($entities));
     return $entities;
   }
 
@@ -224,20 +295,8 @@
    * @throws Exception
    *   Exception if a fault is received when the REST call was made.
    */
-  public function parseEventResponse($response) {
+  public function parseEventResponse($repositories) {
 
-    // Fetch the list of events.
-    if ($response->code == 404) {
-      // No data was returned so let's provide an empty list.
-      watchdog('github', 'Response Code 404', array(), WATCHDOG_DEBUG);
-      $repositories = array();
-    }
-    else /* We have response data */ {
-      // Convert the JSON (assuming that's what we're getting) into a PHP array.
-      // Do any unmarshalling to convert the response data into a PHP array.
-      watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG);
-      $repositories = json_decode($response->data, TRUE);
-    }
 
     // Initialize an empty list of entities for returning.
     $entities = array();
@@ -250,9 +309,7 @@
       // Make the request.
       try {
         $readmeResponse = $this->connection->makeRequest($readmePath, 'GET', array('Accept' => 'application/vnd.github.v3.html'));
-
-	//$readmeResponse=[];
-	//$readmeResponse["code"]=404;
+	$readme = $this->parseReadmeResponse($readmeResponse);
       }
       catch (Exception $e) {
         drupal_set_message($e->getMessage());
@@ -262,35 +319,13 @@
 
       // Make the request.
       try {
-	//$licenseResponse=[];
-	//$licenseResponse["code"]=404;
         $licenseResponse = $this->connection->makeRequest($licensePath, 'GET', array('Accept' => 'application/vnd.github.drax-preview+json'));
+	$license = $this->parseLicenseResponse($licenseResponse);
       }
       catch (Exception $e) {
         drupal_set_message($e->getMessage());
       }
-/*
-      $vocabulary = taxonomy_vocabulary_machine_name_load('github_topics');
 
-      $terms = array();
-
-      foreach ($repository['topics'] as $topic) {
-        $term = (object) array(
-          'name' => $topic,
-          'description' => $topic,
-          'vid' => $vocabulary->vid,
-        );
-        taxonomy_term_save($term);
-        $terms[] = $term;
-      }
-*/
-      //dpm($terms);
-
-      $readme = "No Readme";
-      $readme = $this->parseReadmeResponse($readmeResponse);
-
-      $license = "undefined";
-      $license = $this->parseLicenseResponse($licenseResponse);
 
       $entities[] = (object) array(
         // Set repository information.

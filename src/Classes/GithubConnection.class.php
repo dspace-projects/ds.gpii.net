@@ -184,7 +184,7 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
    *
    * @todo Update the first two test classes to not assume a SimpleXMLElement.
    */
-  public function makeRequest($resource_path, $http_method, $header_options = array(), $data = array(), $data_as_headers = FALSE) {
+  public function makeRequest($resource_path, $http_method, $header_options = array() ) {
 
     // Tap into this function's cache if there is one.
     $request_cache_map = &drupal_static(__FUNCTION__);
@@ -195,7 +195,6 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
     $options = array(
       'headers' => $headers,
       'method'  => $http_method,
-      'data'    => $data,
     );
 
     // If cached, we have already issued this request during this page request
