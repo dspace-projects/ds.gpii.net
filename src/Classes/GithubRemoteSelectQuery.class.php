@@ -221,7 +221,7 @@
 			  else /* We have response data */ {
 				  // Convert the JSON (assuming that's what we're getting) into a PHP array.
 				  // Do any unmarshalling to convert the response data into a PHP array.
-				  watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG)
+				  watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG);
 				  $ttt =array_values(json_decode($response->data, TRUE));
 			  }
 			  //$ttt['repository_fullname'] = 'aaa';
