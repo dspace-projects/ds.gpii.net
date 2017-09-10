@@ -151,30 +151,6 @@
     );
   }
 
-  function parseLink($l)
-  {
-	  $links = [];
-	  $links = explode(',', $l);
-	  $temp = count($links);
-	  foreach ($links as $link) {
-		  $segments = [];
-		  $segments = explode(';', $link);
-		  if (count($segments) < 2)
-			  continue;
-		  $linkPart = trim($segments[0]);
-
-		  $linklen = strlen($linkPart);
-
-		  $linkPart = substr($linkPart, 1, $linklen - 2);
-		  for ($i = 1; $i < count($segments); $i++) {
-			  $rel = trim($segments[1]);
-			  if(strcmp($rel, 'rel="next"')==0) {
-				  return substr($linkPart, 23);
-			  }
-		  }
-	  }
-	  return NULL;
-  }
   /**
    * Run the query and return a result.
    *
@@ -232,7 +208,7 @@
 		  $headers = $response->headers;
 		  if (isset($headers['link'])) {
 			  if(!$path) break;
-			  $path=$this->parseLink($headers['link']);
+			  $path=github_parseLink($headers['link']);
 		  }
 		  else
 			  $path=NULL;
@@ -307,14 +283,6 @@
 		  {
 			  if(isset($repository[$p]))
 				  $entity[$p]=$repository[$p];
-			  else(isset($i["github_api"]["get_url"]))
-			  {
-			  	if(isset($repository[$p."_url"]))
-				{
-				}
-
-				
-			  }
 		  }
 
 

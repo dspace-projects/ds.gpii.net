@@ -124,6 +124,58 @@ function github_entity_info() {
   return $entities;
 }
 
+function github_parseLink($l)
+  {
+	  $links = [];
+	  $links = explode(',', $l);
+	  $temp = count($links);
+	  foreach ($links as $link) {
+		  $segments = [];
+		  $segments = explode(';', $link);
+		  if (count($segments) < 2)
+			  continue;
+		  $linkPart = trim($segments[0]);
+
+		  $linklen = strlen($linkPart);
+
+		  $linkPart = substr($linkPart, 1, $linklen - 2);
+		  for ($i = 1; $i < count($segments); $i++) {
+			  $rel = trim($segments[1]);
+			  if(strcmp($rel, 'rel="next"')==0) {
+				  return substr($linkPart, 23);
+			  }
+		  }
+	  }
+	  return NULL;
+  }
+
+function github_feeds_httpfetcher_aa_after_fetch_alter(&$that,&$result)
+{
+	$headers = $result->headers;
+
+	if (isset($headers['link'])) {
+		$path=github_parseLink($headers['link']);
+	}
+	else
+	{
+		$path=NULL;
+	}
+
+	if(!$path) return;
+
+	$source=$that->url;
+
+	$that->url="https://api.github.com/".$path;
+
+	$result2 = $that->getRaw(); 
+
+	$that->url=$source;
+
+	if($result2)
+		$result->data = rtrim($result->data,"]").",".ltrim($result2,"[");
+
+}
+
 /**
  * Implements hook_entity_property_info_alter().
  *
@@ -136,28 +188,28 @@ function github_entity_info() {
  */
 function github_entity_property_info_alter(&$info) {
 
-  // Set the entity types and get their properties.
-  $entity_types = array(
-    'github_remote_repository',
-  );
+	// Set the entity types and get their properties.
+	$entity_types = array(
+		'github_remote_repository',
+	);
 
-  $remote_properties = github_get_remote_properties();
+	$remote_properties = github_get_remote_properties();
 
-  // Assign the property data to each entity.
-  foreach ($entity_types as $entity_type) {
-    $properties = &$info[$entity_type]['properties'];
-    $entity_data = &$properties['entity_data'];
-    $pp = &$remote_properties[$entity_type];
-    $entity_data['type'] = 'remote_entity_' . $entity_type;
+	// Assign the property data to each entity.
+	foreach ($entity_types as $entity_type) {
+		$properties = &$info[$entity_type]['properties'];
+		$entity_data = &$properties['entity_data'];
+		$pp = &$remote_properties[$entity_type];
+		$entity_data['type'] = 'remote_entity_' . $entity_type;
 
-    // Set the default getter callback for each property.
-    foreach ($pp as $key => $pinfo) {
-      $pp[$key]['getter callback'] = 'entity_property_verbatim_get';
-    }
+		// Set the default getter callback for each property.
+		foreach ($pp as $key => $pinfo) {
+			$pp[$key]['getter callback'] = 'entity_property_verbatim_get';
+		}
 
-    // Assign the updated property info to the entity info.
-    $entity_data['property info'] = $pp;
-  }
+		// Assign the updated property info to the entity info.
+		$entity_data['property info'] = $pp;
+	}
 }
 
 /**
@@ -168,55 +220,51 @@ function github_entity_property_info_alter(&$info) {
  */
 function github_get_remote_properties() {
 
-  // Initialize a list of entity properties.
-  $properties = array();
+	// Initialize a list of entity properties.
+	$properties = array();
 
-  // Define properties for the entity type.
-  $properties['github_remote_repository'] = array(
+	// Define properties for the entity type.
+	$properties['github_remote_repository'] = array(
 
-    // Repository information.
-    'id' => array(
-      'label' => 'ID',
-      'type' => 'integer',
-      'description' => 'The id of the repository.',
-    ),
-    'name' => array(
-      'label' => 'Name',
-      'type' => 'text',
-      'description' => 'The name of the repository.',
-    ),
-    'full_name' => array(
-      'label' => 'Full name',
-      'type' => 'text',
-      'description' => 'The full name of the repository.',
-    ),
-    'description' => array(
-      'label' => 'Description',
-      'type' => 'text',
-      'description' => 'The description of the repository.',
-    ),
-    'readme' => array(
-      'label' => 'Readme',
-      'type' => 'text',
-      'description' => 'The readme file of the repository.',
-      'github_api'=>  array(
-	      'repos' => 'readme', 
-	      array('Accept' => 'application/vnd.github.v3.html')
-      )
-    ),
-    'url' => array(
-      'label' => 'URL',
-      'type' => 'text',
-      'description' => 'The url of the repository.',
-    ),
-    'topics' => array(
-      'label' => 'Topics',
-      'type' => 'list<taxonomy_term>',
-      'description' => 'The topics of the repository.',
-    ),
-    'createddate' => array(
-      'label' => 'Created Date',
-      'type' => 'date',
+		// Repository information.
+		'id' => array(
+			'label' => 'ID',
+			'type' => 'integer',
+			'description' => 'The id of the repository.',
+		),
+		'name' => array(
+			'label' => 'Name',
+			'type' => 'text',
+			'description' => 'The name of the repository.',
+		),
+		'full_name' => array(
+			'label' => 'Full name',
+			'type' => 'text',
+			'description' => 'The full name of the repository.',
+		),
+		'description' => array(
+			'label' => 'Description',
+			'type' => 'text',
+			'description' => 'The description of the repository.',
+		),
+		'readme' => array(
+			'label' => 'Readme',
+			'type' => 'text',
+			'description' => 'The readme file of the repository.',
+		),
+		'url' => array(
+			'label' => 'URL',
+			'type' => 'text',
+			'description' => 'The url of the repository.',
+		),
+		'topics' => array(
+			'label' => 'Topics',
+			'type' => 'list<taxonomy_term>',
+			'description' => 'The topics of the repository.',
+		),
+		'createddate' => array(
+			'label' => 'Created Date',
+			'type' => 'date',
       'description' => 'The date the repository was created.',
     ),
     'updateddate' => array(
@@ -406,4 +454,20 @@ function github_run($item) {
   }
 
   }
+
+function github_feeds_plugins() {
+  $path = drupal_get_path('module', 'github') . '/src/Classes/';
+  $info = array();
+  $info['GithubFetcher'] = array(
+    'name'        => t('Github HTTP fetcher'),
+    'description' => t('Fetch Github repos.'),
+    'handler' => array(
+      'parent' => 'FeedsHTTPFetcher',
+      'class'  => 'GithubFetcher',
+      'file'   => 'GithubFetcher.php',
+      'path'   => $path,
+    ),
+  );
+  return $info;
+}
 
