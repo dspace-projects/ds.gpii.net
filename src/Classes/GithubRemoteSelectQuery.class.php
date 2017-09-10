@@ -151,30 +151,6 @@
     );
   }
 
-  function parseLink($l)
-  {
-	  $links = [];
-	  $links = explode(',', $l);
-	  $temp = count($links);
-	  foreach ($links as $link) {
-		  $segments = [];
-		  $segments = explode(';', $link);
-		  if (count($segments) < 2)
-			  continue;
-		  $linkPart = trim($segments[0]);
-
-		  $linklen = strlen($linkPart);
-
-		  $linkPart = substr($linkPart, 1, $linklen - 2);
-		  for ($i = 1; $i < count($segments); $i++) {
-			  $rel = trim($segments[1]);
-			  if(strcmp($rel, 'rel="next"')==0) {
-				  return substr($linkPart, 23);
-			  }
-		  }
-	  }
-	  return NULL;
-  }
   /**
    * Run the query and return a result.
    *
@@ -185,6 +161,7 @@
    */
   public function execute() {
 
+	  $repositories = [];
 	  $entities = [];
 
 	  // If there are any validation errors, don't perform a search.
@@ -200,10 +177,6 @@
 		  // Make the request.
 		  try {
 			  $response = $this->connection->makeRequest($path, 'GET', array('Accept' => 'application/vnd.github.mercy-preview+json'));
-		  }
-		  catch (Exception $e) {
-			  drupal_set_message($e->getMessage());
-		  }
 
 
 		  switch ($this->base_entity_type) {
@@ -224,19 +197,7 @@
 				  watchdog('github', 'Response data received', array(), WATCHDOG_DEBUG);
 				  $ttt =array_values(json_decode($response->data, TRUE));
 			  }
-			  //$ttt['repository_fullname'] = 'aaa';
-      /*	$entities[] = (object) array(
-	// Set repository information.
-	'repository_id' => $k,
-	'repository_name' => 'bbbb',
-	'repository_fullname' => htmlentities($linkPart),
-);
-			$entities[] = (object) array(
-			'repository_id' => 1234,
-	'repository_name' => 'fdfda',
-	'repository_fullname' => 'abc',
-      );*/
-			  //$entities = $ttt;	
+
 			  for ($i= 0; $i<count($ttt); $i++) {
 				  $repositories[] = $ttt[$i];
 			  }
@@ -246,42 +207,47 @@
 
 		  $headers = $response->headers;
 		  if (isset($headers['link'])) {
-			  if(!$path) break;
-			  $path=$this->parseLink($headers['link']);
-	}
-	else
-		$path=NULL;
+			  $path=github_parseLink($headers['link']);
+		  }
+		  else
+			  $path=NULL;
+		  }
+		  catch (Exception $e) {
+			  drupal_set_message($e->getMessage());
+			  $path=NULL;
+		  }
 
-    }
-    //dpm($response);
+	  }
+	  //dpm($response);
 
 
-//		print_r("\nbefore:".count($repositories));
+	  //		print_r("\nbefore:".count($repositories));
 
-    if (isset($this->conditions[$this->remote_base])) {
-	    foreach ($this->conditions[$this->remote_base] as $condition) {
-		    switch ($condition['field']) {
-		    case 'repository_id':
-			    $repository_id = $condition['value'];
-			    $repositories = array_filter($repositories, function ($objects) use ($repository_id) {
-				    return ($objects["id"] == $repository_id);
-			    });
-			    break;
+	  if (isset($this->conditions[$this->remote_base])) {
+		  foreach ($this->conditions[$this->remote_base] as $condition) {
+			  switch ($condition['field']) {
+			  case 'id':
+				  $repository_id = $condition['value'];
+				  $repositories = array_filter($repositories, function ($objects) use ($repository_id) {
+					  return ($objects["id"] == $repository_id);
+				  });
+				  break;
 
-          			case 'repository_fullname':
-            				$repository_fullname = $condition['value'];
-            				$repositories = array_filter($repositories, function ($objects) use ($repository_fullname) {
-              					return ($objects["full_name"] == $repository_fullname);
-            				});
-            			break;
-        		}
-      		}
-    	}
-//		print_r("after:\n".count($repositories));
-    	// Return the list of results.
-    $entities = $this->parseEventResponse($repositories);
-//`		print_r("entity\n".count($entities));
-    return $entities;
+			  case 'fullname':
+			  case 'full_name':
+				  $repository_full_name = $condition['value'];
+				  $repositories = array_filter($repositories, function ($objects) use ($repository_full_name) {
+					  return ($objects["full_name"] == $repository_full_name);
+				  });
+				  break;
+			  }
+		  }
+	  }
+	  //		print_r("after:\n".count($repositories));
+	  // Return the list of results.
+	  $entities = $this->parseEventResponse($repositories);
+	  //`		print_r("entity\n".count($entities));
+	  return $entities;
 
   }
 
@@ -303,57 +269,49 @@
   public function parseEventResponse($repositories) {
 
 
-    // Initialize an empty list of entities for returning.
-    $entities = array();
+	  // Initialize an empty list of entities for returning.
+	  $entities = array();
 
-    // Iterate through each event.
-    foreach ($repositories as $key=>$repository) {
-      watchdog('github', 'Repository no. %key : %name', array('%key' => $key, '%name' => $repository['full_name']), WATCHDOG_DEBUG);
-      $readmePath = "repos/" . $repository['full_name'] . "/readme";
+	  // Iterate through each event.
+	  foreach ($repositories as $key=>$repository) {
+		  watchdog('github', 'Repository no. %key : %name', array('%key' => $key, '%name' => $repository['full_name']), WATCHDOG_DEBUG);
 
-      // Make the request.
-      try {
-        $readmeResponse = $this->connection->makeRequest($readmePath, 'GET', array('Accept' => 'application/vnd.github.v3.html'));
-	$readme = $this->parseReadmeResponse($readmeResponse);
-      }
-      catch (Exception $e) {
-        drupal_set_message($e->getMessage());
-      }
-
-      $licensePath = "repos/" . $repository['full_name'] . "/license";
-
-      // Make the request.
-      try {
-        $licenseResponse = $this->connection->makeRequest($licensePath, 'GET', array('Accept' => 'application/vnd.github.drax-preview+json'));
-	$license = $this->parseLicenseResponse($licenseResponse);
-      }
-      catch (Exception $e) {
-        drupal_set_message($e->getMessage());
-      }
+		  $entity = $repository;
+/*
+		  foreach(github_get_remote_properties()["github_remote_repository"] as $p => $i)
+		  {
+			  if(isset($repository[$p]))
+				  $entity[$p]=$repository[$p];
+		  }
+ */
 
 
-      $entities[] = (object) array(
-        // Set repository information.
-        'repository_id' => isset($repository['id']) ? $repository['id'] : NULL,
-        'repository_name' => isset($repository['name']) ? $repository['name'] : NULL,
-        'repository_fullname' => isset($repository['full_name']) ? $repository['full_name'] : NULL,
-        'repository_description' => isset($repository['description']) ? $repository['description'] : NULL,
-        'repository_readme' => $readme,
-        'repository_license' => $license,
-        'repository_url' => isset($repository['html_url']) ? $repository['html_url'] : NULL,
-        'repository_topics' => isset($terms) ? $terms : NULL,
-        'repository_createddate' => isset($repository['created_at']) ? $repository['created_at'] : NULL,
-        'repository_updateddate' => isset($repository['updated_at']) ? $repository['updated_at'] : NULL,
-        'repository_pusheddate' => isset($repository['pushed_at']) ? $repository['pushed_at'] : NULL,
-        'repository_forks' => isset($repository['forks_count']) ? $repository['forks_count'] : NULL,
-        'repository_stargazers' => isset($repository['stargazers_count']) ? $repository['stargazers_count'] : NULL,
-        'repository_watchers' => isset($repository['watchers_count']) ? $repository['watchers_count'] : NULL,
-        'repository_size' => isset($repository['size']) ? $repository['size'] : NULL,
-      );
-    }
 
-    // Return the newly-created list of entities.
-    return $entities;
+		  // Make the request.
+		  try {
+			  $readmePath = "repos/" . $repository['full_name'] . "/readme";
+			  $readmeResponse = $this->connection->makeRequest($readmePath, 'GET', array('Accept' => 'application/vnd.github.v3.html'));
+			  $entity["readme"] = $this->parseReadmeResponse($readmeResponse);
+		  }
+		  catch (Exception $e) {
+			  drupal_set_message($e->getMessage());
+		  }
+
+		  $licensePath = "repos/" . $repository['full_name'] . "/license";
+
+		  // Make the request.
+		  try {
+			  $licenseResponse = $this->connection->makeRequest($licensePath, 'GET', array('Accept' => 'application/vnd.github.drax-preview+json'));
+			  $entity["license"] = $this->parseLicenseResponse($licenseResponse);
+		  }
+		  catch (Exception $e) {
+			  drupal_set_message($e->getMessage());
+		  }
+		  $entities[]=(object)$entity;
+	  }
+
+	  // Return the newly-created list of entities.
+	  return $entities;
   }
 
   /**
@@ -372,19 +330,19 @@
    */
   public function parseReadmeResponse($response) {
 
-    // Fetch the list of events.
-    if ($response->code == 404) {
-      watchdog('github', 'Readme response data not received', array(), WATCHDOG_DEBUG);
-      // No data was returned so let's provide an empty list.
-      $readme = NULL;
-    }
-    else /* We have response data */ {
-      watchdog('github', 'Readme response data received', array(), WATCHDOG_DEBUG);
-      // Convert the JSON (assuming that's what we're getting) into a PHP array.
-      // Do any unmarshalling to convert the response data into a PHP array.
-      $readme = $response->data;
-    }
-    return $readme;
+	  // Fetch the list of events.
+	  if ($response->code == 404) {
+		  watchdog('github', 'Readme response data not received', array(), WATCHDOG_DEBUG);
+		  // No data was returned so let's provide an empty list.
+		  $readme = NULL;
+	  }
+	  else /* We have response data */ {
+		  watchdog('github', 'Readme response data received', array(), WATCHDOG_DEBUG);
+		  // Convert the JSON (assuming that's what we're getting) into a PHP array.
+		  // Do any unmarshalling to convert the response data into a PHP array.
+		  $readme = $response->data;
+	  }
+	  return $readme;
   }
 
   /**
@@ -403,19 +361,19 @@
    */
   public function parseLicenseResponse($response) {
 
-    // Fetch the list of events.
-    if ($response->code == 404) {
-      watchdog('github', 'License response data not received', array(), WATCHDOG_DEBUG);
-      // No data was returned so let's provide an empty list.
-      $license = "undefined";
-    }
-    else /* We have response data */ {
-      watchdog('github', 'License response data received', array(), WATCHDOG_DEBUG);
-      // Convert the JSON (assuming that's what we're getting) into a PHP array.
-      // Do any unmarshalling to convert the response data into a PHP array.
-      $license = json_decode($response->data, TRUE)['license']['name'];
-    }
-    return $license;
+	  // Fetch the list of events.
+	  if ($response->code == 404) {
+		  watchdog('github', 'License response data not received', array(), WATCHDOG_DEBUG);
+		  // No data was returned so let's provide an empty list.
+		  $license = "undefined";
+	  }
+	  else /* We have response data */ {
+		  watchdog('github', 'License response data received', array(), WATCHDOG_DEBUG);
+		  // Convert the JSON (assuming that's what we're getting) into a PHP array.
+		  // Do any unmarshalling to convert the response data into a PHP array.
+		  $license = json_decode($response->data, TRUE)['license']['name'];
+	  }
+	  return $license;
   }
 
   /**
@@ -430,16 +388,16 @@
    */
   public function throwException($code, $message) {
 
-    // Report error to the logs.
-    watchdog('github', 'ERROR: GithubProjectsRemoteSelectQuery: "@code", "@message".', array(
-      '@code' => $code,
-      '@message' => $message,
-    ));
+	  // Report error to the logs.
+	  watchdog('github', 'ERROR: GithubProjectsRemoteSelectQuery: "@code", "@message".', array(
+		  '@code' => $code,
+		  '@message' => $message,
+	  ));
 
-    // Throw an error with which callers must deal.
-    throw new Exception(t("GithubProjectsRemoteSelectQuery error, got message '@message'.", array(
-      '@message' => $message,
-    )), $code);
+	  // Throw an error with which callers must deal.
+	  throw new Exception(t("GithubProjectsRemoteSelectQuery error, got message '@message'.", array(
+		  '@message' => $message,
+	  )), $code);
   }
 
   /**

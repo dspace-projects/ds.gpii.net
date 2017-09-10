@@ -16,7 +16,7 @@ function github_contenttype_install() {
     'name' => $t('Github Project'),
     'description' => $t('Create a new github projects'),
     'title_label' => $t('Github Project title'),
-    'base' => 'node_content', //github_contenttype
+    'base' => 'node_content',
     'custom' => TRUE,
 
   ];
@@ -54,6 +54,7 @@ function github_contenttype_install() {
   }
 
 }
+
 function _github_contenttype_installed_fields() {
   $t = get_t();
   return [

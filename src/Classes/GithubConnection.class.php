@@ -187,7 +187,7 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
   public function makeRequest($resource_path, $http_method, $header_options = array() ) {
 
     // Tap into this function's cache if there is one.
-    $request_cache_map = &drupal_static(__FUNCTION__);
+  //  $request_cache_map = &drupal_static(__FUNCTION__);
 
     $headers = array_merge($this->getHeaders(), $header_options);
 
@@ -202,20 +202,23 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
     $request_path = $this->endpoint . '/' . $resource_path;
 
     // Either get the data from the cache or send a request for it.
-    if (isset($request_cache_map[$request_path])) {
+    $cached=cache_get($request_path);
+    if ($cached) {
       // Use the cached copy.
-      $response = $request_cache_map[$request_path];
+      $response = $cached->data;
+      //TODO:check cache-pragmas inside data???;
     }
     else {
       // Not cached yet so fire off the request.
       $response = drupal_http_request($request_path, $options);
 
-      // And then cache to avoid duplicate calls within the page request.
-      $request_cache_map[$request_path] = $response;
+      // And then cache to avoid duplicate calls 
+      $this->handleRestError($request_path, $response);
+      // $request_cache_map[$request_path] = $response;
+      cache_set($request_path,$response);
     }
 
     // Handle any errors and then return the response.
-    $this->handleRestError($request_path, $response);
     return $response;
   }
 
