@@ -76,7 +76,7 @@ function github_entity_info() {
     'fieldable' => FALSE,
     'entity keys' => array(
       'id' => 'eid',
-      'label' => 'repository_name',
+      'label' => 'name',
       'bundle' => array(),
     ),
     'access callback' => 'github_entity_callback',
@@ -98,8 +98,8 @@ function github_entity_info() {
     // Remote Entity API properties.
     'remote base table' => 'github_remote_repositories',
     'remote entity keys' => array(
-      'remote id' => 'repository_fullname',
-      'label' => 'repository_name',
+      'remote id' => 'full_name',
+      'label' => 'name',
     ),
     'expiry' => array(
       // Number of seconds before a locally cached instance must be refreshed
@@ -117,7 +117,7 @@ function github_entity_info() {
   // Assign each map to its corresponding entity.
   foreach ($entities as $key => $einfo) {
     $entities[$key]['property map'] =
-    drupal_map_assoc(array_keys($remote_properties[$key]));
+    drupal_map_assoc(array_keys($remote_properties[$key])); //1:1 mapping to remote entity for wrapper
   }
 
   // Return all of the entity information.
@@ -175,72 +175,76 @@ function github_get_remote_properties() {
   $properties['github_remote_repository'] = array(
 
     // Repository information.
-    'repository_id' => array(
+    'id' => array(
       'label' => 'ID',
       'type' => 'integer',
       'description' => 'The id of the repository.',
     ),
-    'repository_name' => array(
+    'name' => array(
       'label' => 'Name',
       'type' => 'text',
       'description' => 'The name of the repository.',
     ),
-    'repository_fullname' => array(
+    'full_name' => array(
       'label' => 'Full name',
       'type' => 'text',
       'description' => 'The full name of the repository.',
     ),
-    'repository_description' => array(
+    'description' => array(
       'label' => 'Description',
       'type' => 'text',
       'description' => 'The description of the repository.',
     ),
-    'repository_readme' => array(
+    'readme' => array(
       'label' => 'Readme',
       'type' => 'text',
       'description' => 'The readme file of the repository.',
+      'github_api'=>  array(
+	      'repos' => 'readme', 
+	      array('Accept' => 'application/vnd.github.v3.html')
+      )
     ),
-    'repository_url' => array(
+    'url' => array(
       'label' => 'URL',
       'type' => 'text',
       'description' => 'The url of the repository.',
     ),
-    'repository_topics' => array(
+    'topics' => array(
       'label' => 'Topics',
       'type' => 'list<taxonomy_term>',
       'description' => 'The topics of the repository.',
     ),
-    'repository_createddate' => array(
+    'createddate' => array(
       'label' => 'Created Date',
       'type' => 'date',
       'description' => 'The date the repository was created.',
     ),
-    'repository_updateddate' => array(
+    'updateddate' => array(
       'label' => 'Updated Date',
       'type' => 'date',
       'description' => 'The last date the repository was updated.',
     ),
-    'repository_pusheddate' => array(
+    'pusheddate' => array(
       'label' => 'Pushed Date',
       'type' => 'date',
       'description' => 'The laste date the repository was pushed.',
     ),
-    'repository_forks' => array(
+    'forks' => array(
       'label' => 'Forks',
       'type' => 'integer',
       'description' => 'The amount of forks for the repository.',
     ),
-    'repository_stargazers' => array(
+    'stargazers_count' => array(
       'label' => 'Stargazers',
       'type' => 'integer',
       'description' => 'The amount of stargazers for the repository.',
     ),
-    'repository_watchers' => array(
+    'watchers' => array(
       'label' => 'Watchers',
       'type' => 'integer',
       'description' => 'The amount of watchers for the repository.',
     ),
-    'repository_size' => array(
+    'size' => array(
       'label' => 'Size',
       'type' => 'integer',
       'description' => 'The size of the repository.',
@@ -281,8 +285,8 @@ function github_remote_repository_load($owner, $name) {
  *   The themed output for the repository page.
  */
 function github_remote_repository_view($repository) {
-  $fullname = $repository->entity_data->repository_fullname;
-  drupal_set_title($fullname);
+  $full_name = $repository->entity_data->full_name;
+  drupal_set_title($full_name);
   $repository_output = theme('github_remote_repository', array(
     'repository' => $repository->entity_data,
   ));
@@ -393,7 +397,7 @@ function github_run($item) {
   foreach ($result as $r) {
 	   try
 	   {
-	   	remote_entity_load_by_remote_id('github_remote_repository', $r->repository_fullname); //TODO:don't reload but call correct caching function;
+	   	remote_entity_load_by_remote_id('github_remote_repository', $r->full_name); //TODO:don't reload but call correct caching function;
 	   }
 	   catch(Exception $e)
 		   {

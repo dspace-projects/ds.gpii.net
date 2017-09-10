@@ -34,6 +34,6 @@ function github_install() {
  * Implements hook_uninstall().
  */
 function github_uninstall() {
-  $vocabulary = taxonomy_vocabulary_machine_name_load('github_topics');
-  taxonomy_vocabulary_delete($vocabulary->vid);
+//  $vocabulary = taxonomy_vocabulary_machine_name_load('github_topics');
+//  taxonomy_vocabulary_delete($vocabulary->vid);
 }

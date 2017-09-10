@@ -30,28 +30,33 @@ function github_contenttype_preprocess_node(&$variables) {
   }
 }
 
+function github_contenttype_entity_property_info_alter(&$info) {
+  // Extra property for food_collection containing the color terms of the child nodes.
+foreach(array('stargazers','watchers') as $p)
+{
+  $info['node']['bundles']['github_content']['properties'][$p] = array(
+    'label' => t($p),
+    'type' => 'integer',
+    'description' => t($p),
+    'getter callback' => 'github_contenttype_get_github_property', // Callback to a custom function.
+  );
+}
+//dpm($info,"info");
+return($info);
+}
+
+function github_contenttype_get_github_property($node, $options, $name, $entity_type) {
+	$metadata = entity_metadata_wrapper('node', $node);
+	return 42;	
+}
+
 function github_contenttype_preprocess_node_github_content(&$variables) {
 if (isset($variables['github_reference'][0]['entity']))
 {
-  $variables['name'] = !empty($variables['github_name'][0]['value']) ? $variables['github_name'][0]['value'] : $variables['github_reference'][0]['entity']->entity_data->repository_name;
+  $variables['name'] = !empty($variables['github_name'][2]['value']) ? $variables['github_name'][0]['value'] : $variables['github_reference'][0]['entity']->entity_data->repository_name;
   $variables['readme'] = !empty($variables['github_readme'][0]['value']) ? $variables['github_readme'][0]['value'] : $variables['github_reference'][0]['entity']->entity_data->repository_readme;
   $variables['url'] = $variables['github_reference'][0]['entity']->entity_data->repository_url;
   $variables['license'] = $variables['github_reference'][0]['entity']->entity_data->repository_license;
-  $variables['topics'] = $variables['github_reference'][0]['entity']->entity_data->repository_topics;
-  $variables['stargazers'] = $variables['github_reference'][0]['entity']->entity_data->repository_stargazers;
-  $variables['watchers'] = $variables['github_reference'][0]['entity']->entity_data->repository_watchers;
-  $variables['forks'] = $variables['github_reference'][0]['entity']->entity_data->repository_forks;
-}
-else
-{
-  $variables['name'] = !empty($variables['github_name'][0]['value']) ? $variables['github_name'][0]['value'] : ""; 
-  $variables['readme'] = !empty($variables['github_readme'][0]['value']) ? $variables['github_readme'][0]['value'] : "";
-  $variables['url'] = "";
-  $variables['license'] = "";
-  $variables['topics'] = [];
-  $variables['stargazers'] = "";
-  $variables['watchers'] = "";
-  $variables['forks'] = "";
 }
 }
 
