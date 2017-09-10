@@ -37,6 +37,26 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
   }
 
   /**
+   * Load all remote entities.
+   *
+   * @param string $entity_type
+   *   The entity type to load.
+   *
+   * @return object
+   *   An entity object.
+   */
+  public function remote_entity_load_all($entity_type) {
+    watchdog('github', 'Load all remote entities', array(), WATCHDOG_DEBUG);
+    $query = $this->getRemoteEntityQuery('select');
+    $query->base($entity_type);
+    $result = $query->execute();
+
+    watchdog('github', 'Results', array(), WATCHDOG_DEBUG);
+    // There's only one. Same pattern as entity_load_single().
+    return reset($result);
+  }
+
+  /**
    * Save a remote entity.
    *
    * @param string $entity_type
@@ -83,13 +103,13 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
   public function getRemoteEntityQuery($query_type = 'select') {
     switch ($query_type) {
       case 'select':
-        return new GithubProjectsRemoteSelectQuery($this);
+        return new GithubRemoteSelectQuery($this);
 
       case 'insert':
-        return new GithubProjectsRemoteInsertQuery($this);
+        return new GithubRemoteInsertQuery($this);
 
       case 'update':
-        return new GithubProjectsRemoteUpdateQuery($this);
+        return new GithubRemoteUpdateQuery($this);
     }
   }
 
@@ -145,11 +165,6 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
    * Make a REST request.
    *
    * Originally from clients_connection_drupal_services_rest_7->makeRequest().
-   * Examples:
-   * Retrieve an event:
-   *  makeRequest('event?eventId=ID', 'GET');
-   * Update a node:
-   *  makeRequest('node/NID', 'POST', $data);
    *
    * @param string $resource_path
    *   The path of the resource. Eg, 'node', 'node/1', etc.
@@ -169,10 +184,10 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
    *
    * @todo Update the first two test classes to not assume a SimpleXMLElement.
    */
-  public function makeRequest($resource_path, $http_method, $header_options = array(), $data = array(), $data_as_headers = FALSE) {
+  public function makeRequest($resource_path, $http_method, $header_options = array() ) {
 
     // Tap into this function's cache if there is one.
-    $request_cache_map = &drupal_static(__FUNCTION__);
+  //  $request_cache_map = &drupal_static(__FUNCTION__);
 
     $headers = array_merge($this->getHeaders(), $header_options);
 
@@ -180,7 +195,6 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
     $options = array(
       'headers' => $headers,
       'method'  => $http_method,
-      'data'    => $data,
     );
 
     // If cached, we have already issued this request during this page request
@@ -188,20 +202,23 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
     $request_path = $this->endpoint . '/' . $resource_path;
 
     // Either get the data from the cache or send a request for it.
-    if (isset($request_cache_map[$request_path])) {
+    $cached=cache_get($request_path);
+    if ($cached) {
       // Use the cached copy.
-      $response = $request_cache_map[$request_path];
+      $response = $cached->data;
+      //TODO:check cache-pragmas inside data???;
     }
     else {
       // Not cached yet so fire off the request.
       $response = drupal_http_request($request_path, $options);
 
-      // And then cache to avoid duplicate calls within the page request.
-      $request_cache_map[$request_path] = $response;
+      // And then cache to avoid duplicate calls 
+      $this->handleRestError($request_path, $response);
+      // $request_cache_map[$request_path] = $response;
+      cache_set($request_path,$response);
     }
 
     // Handle any errors and then return the response.
-    $this->handleRestError($request_path, $response);
     return $response;
   }
 
@@ -209,7 +226,7 @@ class clients_connection_our_rest extends clients_connection_base implements Cli
    * Add Authorization into Header.
    */
   private function getHeaders() {
-    $token = "token " . variable_get('github_projects.token', '');
+    $token = "token " . variable_get('github.token', '');
     return array('Authorization' => $token);
   }
 

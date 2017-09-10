@@ -8,7 +8,7 @@
  /**
   * Repository class extending Entity.
   */
-class GithubProjectsRepository extends Entity {
+class GithubRepository extends Entity {
 
   /**
    * Override defaultUri().
