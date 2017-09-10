@@ -207,7 +207,6 @@
 
 		  $headers = $response->headers;
 		  if (isset($headers['link'])) {
-			  if(!$path) break;
 			  $path=github_parseLink($headers['link']);
 		  }
 		  else
@@ -277,13 +276,15 @@
 	  foreach ($repositories as $key=>$repository) {
 		  watchdog('github', 'Repository no. %key : %name', array('%key' => $key, '%name' => $repository['full_name']), WATCHDOG_DEBUG);
 
-		  $entity = array();
-
+		  $entity = $repository;
+/*
 		  foreach(github_get_remote_properties()["github_remote_repository"] as $p => $i)
 		  {
 			  if(isset($repository[$p]))
 				  $entity[$p]=$repository[$p];
 		  }
+ */
+
 
 
 		  // Make the request.

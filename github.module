@@ -149,33 +149,6 @@ function github_parseLink($l)
 	  return NULL;
   }
 
-function github_feeds_httpfetcher_aa_after_fetch_alter(&$that,&$result)
-{
-	$headers = $result->headers;
-
-	if (isset($headers['link'])) {
-		$path=github_parseLink($headers['link']);
-	}
-	else
-	{
-		$path=NULL;
-	}
-
-	if(!$path) return;
-
-	$source=$that->url;
-
-	$that->url="https://api.github.com/".$path;
-
-	$result2 = $that->getRaw(); 
-
-	$that->url=$source;
-
-	if($result2)
-		$result->data = rtrim($result->data,"]").",".ltrim($result2,"[");
-
-}
-
 /**
  * Implements hook_entity_property_info_alter().
  *
@@ -255,11 +228,16 @@ function github_get_remote_properties() {
 		'url' => array(
 			'label' => 'URL',
 			'type' => 'text',
+			'description' => 'The api url of the repository.',
+		),
+		'html_url' => array(
+			'label' => 'URL',
+			'type' => 'text',
 			'description' => 'The url of the repository.',
 		),
 		'topics' => array(
 			'label' => 'Topics',
-			'type' => 'list<taxonomy_term>',
+			'type' => 'text',
 			'description' => 'The topics of the repository.',
 		),
 		'createddate' => array(
@@ -470,4 +448,3 @@ function github_feeds_plugins() {
   );
   return $info;
 }
-

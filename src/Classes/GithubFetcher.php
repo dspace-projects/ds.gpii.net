@@ -25,7 +25,7 @@ class GithubFetcherResult extends FeedsFetcherResult {
 	  $query = $resource->getRemoteEntityQuery('select');
 	  $query->base('github_remote_repository');
 	  $result=$query->execute();
-	  dpm(count($result), "entities returned");
+	 // dpm(count($result), "entities returned");
 	  return(json_encode($result));
   }
 }
