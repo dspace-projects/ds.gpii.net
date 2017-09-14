@@ -1,5 +1,0 @@
-name = Github Projects
-description = Integrate Github Repositories into Drupal as content.
-core = 7.x
-
-configure = admin/config/development/github_projects
